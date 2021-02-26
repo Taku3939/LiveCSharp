@@ -1,24 +1,39 @@
 ﻿using System;
+using System.IO;
 using System.Net;
 using System.Net.Sockets;
+using System.Threading;
 using System.Threading.Tasks;
+using System.Xml;
 using MessagePack;
 
 namespace LiveClient
 {
     class Program
     {
-        private static TcpClient client;
-        private static MusicValue musicValue = new MusicValue() {MusicNumber = 2, TimeCode = 22};
+        private static Client client;
         static string host = "localhost";
         static int port = 30000;
+        private static readonly MusicValue musicValue = new MusicValue() {MusicNumber = 2, TimeCode = 22};
+
         private static async Task Main(string[] args)
         {
-            client = new TcpClient();
-            await client.ConnectAsync(host, port);
-            var serialize = MessagePackSerializer.Serialize(musicValue);
-            await client.Client.SendAsync(serialize, SocketFlags.None);
-            client.Close();
+            client = new Client();
+            await client.Connect(host, port);
+            client.ReceiveStart();
+            while (true)
+            {
+                var line = Console.ReadLine();
+                if (line == "send")
+                {
+                    var serialize = MessagePackSerializer.Serialize(musicValue);
+                    await client.Send(serialize);
+                }
+                else if (line == "quit")
+                    break;
+            }
+            
+            Console.WriteLine("終了します.");
         }
     }
 }
