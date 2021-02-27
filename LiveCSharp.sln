@@ -4,6 +4,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LiveClient", "LiveClient\Li
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LiveServer", "LiveServer\LiveServer.csproj", "{2FA7779B-3025-4A53-9643-B8A25F0A1BE0}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LiveCoreLibrary", "LiveCoreLibrary\LiveCoreLibrary.csproj", "{B586777A-75AB-4936-9DB5-77FE5DD963A0}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -18,5 +20,9 @@ Global
 		{2FA7779B-3025-4A53-9643-B8A25F0A1BE0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2FA7779B-3025-4A53-9643-B8A25F0A1BE0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2FA7779B-3025-4A53-9643-B8A25F0A1BE0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B586777A-75AB-4936-9DB5-77FE5DD963A0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B586777A-75AB-4936-9DB5-77FE5DD963A0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B586777A-75AB-4936-9DB5-77FE5DD963A0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B586777A-75AB-4936-9DB5-77FE5DD963A0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
