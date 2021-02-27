@@ -6,7 +6,7 @@ namespace LiveServer
     public interface ISocketHolder
     {
         List<TcpClient> GetClients();
-        void AddClient(TcpClient client);
+        void Add(TcpClient client);
         void Remove(TcpClient client);
     }
 }

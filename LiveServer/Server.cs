@@ -16,6 +16,11 @@ namespace LiveServer
         private readonly ISocketHolder _holder;
         private readonly List<CancellationTokenSource> _sources;
 
+        /// <summary>
+        /// コンストラクタ
+        /// </summary>
+        /// <param name="port">ポート</param>
+        /// <param name="socketHolder">TcpClientを保持するISocketHolderを実装したクラス</param>
         public Server(int port, ISocketHolder socketHolder)
         {
             _holder = socketHolder;
@@ -25,9 +30,14 @@ namespace LiveServer
             Console.WriteLine($"Listening start...:{port}");
         }
 
-        public void HealthCheck()
+        /// <summary>
+        /// 接続状態監視用ループ
+        /// 切断時リストからクライアントを削除します
+        /// </summary>
+        /// <param name="interval"></param>
+        public void HealthCheck(int interval)
         {
-            Task.Run(() =>
+            Task.Run(async () =>
             {
                 try
                 {
@@ -39,9 +49,10 @@ namespace LiveServer
                             if (!IsConnected(client.Client))
                                 removeList.Add(client);
                         
-                        foreach (var client in removeList)
+                        foreach (var client in removeList) 
                             _holder.Remove(client);
-                        
+
+                        await Task.Delay(interval);
                     }
                 }
                 catch (Exception e)
@@ -60,7 +71,11 @@ namespace LiveServer
             catch (SocketException) { return false; }
         }
 
-        public void AcceptLoop()
+        /// <summary>
+        /// 接続用ループ
+        /// </summary>
+        /// <param name="interval"></param>
+        public void AcceptLoop(int interval)
         {
             Task.Run(async () =>
             {
@@ -84,12 +99,11 @@ namespace LiveServer
                             Console.WriteLine($"Connected: [No name] " +
                                               $"({remoteEndPoint.Address}: {remoteEndPoint.Port})");
                             
-                            _holder.AddClient(client);
+                            _holder.Add(client);
                             Console.WriteLine("client count is " + _holder.GetClients().Count);
-                            //SocketLoop loop = new SocketLoop(client, _holder, 10);
-                            //loop.Run();
-                            //_sources.Add(loop.Cts);
                         }
+
+                        await Task.Delay(interval);
                     }
                 }
                 catch (Exception e)
@@ -99,9 +113,14 @@ namespace LiveServer
             });
         }
 
-        public void ReceiveLoop()
+        /// <summary>
+        /// 受信用ループ
+        /// 受信したデータを全てのクライアントに送信します
+        /// </summary>
+        /// <param name="interval"></param>
+        public void ReceiveLoop(int interval)
         {
-            Task.Run(() =>
+            Task.Run(async () =>
             {
                 while (true)
                 {
@@ -118,7 +137,7 @@ namespace LiveServer
                                     return;
                                 }
 
-                                Task.Run(async () =>
+                                var _ = Task.Run(async () =>
                                 {
                                     await using MemoryStream mStream = new MemoryStream();
                                     byte[] buffer = new byte[256];
@@ -129,17 +148,15 @@ namespace LiveServer
 
                                     } while (nStream.DataAvailable);
 
-                                    byte[] receiveBytes = mStream.GetBuffer();
-                                    var ob = MessagePackSerializer.Deserialize<MusicValue>(receiveBytes);
-
-                                    Console.WriteLine($"{ob.MusicNumber} is {ob.TimeCode}");
-
+                                    //send
                                     foreach (var c in _holder.GetClients())
                                         if (c.Connected)
                                             await c.Client.SendAsync(buffer, SocketFlags.None);
                                 });
                             }
                         }
+                        
+                        await Task.Delay(interval);
                     }
                     catch (Exception e)
                     {

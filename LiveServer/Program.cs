@@ -13,10 +13,10 @@ namespace LiveServer
         private static void Main(string[] args)
         {
             int port = 30000;
-            Server server = new Server(port, new SocketHolder());
-            server.AcceptLoop();
-            server.HealthCheck();
-            server.ReceiveLoop();
+            Server server = new Server(port, new ConcurrentSocketHolder());
+            server.AcceptLoop(0);
+            server.HealthCheck(10);
+            server.ReceiveLoop(0);
             while (true)
             {
                 var line = Console.ReadLine();

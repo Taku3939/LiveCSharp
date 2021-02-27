@@ -1,11 +1,12 @@
-using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Net.Sockets;
 
 namespace LiveServer
 {
-    public class SocketHolder : ISocketHolder
+    /// <summary>
+    /// TcpClientをリスト管理する : thread-safe class
+    /// </summary>
+    public class ConcurrentSocketHolder : ISocketHolder
     {
         private readonly object lockObject = new object();
         private readonly List<TcpClient> _clients = new List<TcpClient>();
@@ -18,7 +19,7 @@ namespace LiveServer
             }
         }
 
-        public void AddClient(TcpClient client)
+        public void Add(TcpClient client)
         {
             lock (lockObject)
             {

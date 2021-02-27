@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Net.Sockets;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using LiveCoreLibrary;
@@ -35,29 +36,31 @@ namespace LiveClient
                 {
                     while (true)
                     {
-                        if (Source.IsCancellationRequested)
-                            return;
-
-                        if (!client.Connected)
+                        if (client.Available != 0)
                         {
-                            Console.WriteLine("ClientがCloseしています");
-                            return;
+                            if (Source.IsCancellationRequested)
+                                return;
+
+                            if (!client.Connected)
+                            {
+                                Console.WriteLine("ClientがCloseしています");
+                                return;
+                            }
+
+                            NetworkStream nStream = client.GetStream();
+                            if (!nStream.CanRead)
+                                return;
+                            await using MemoryStream mStream = new MemoryStream();
+                            byte[] buffer = new byte[256];
+                            do
+                            {
+                                int dataSize = await nStream.ReadAsync(buffer, 0, buffer.Length);
+                                await mStream.WriteAsync(buffer, 0, dataSize);
+                            } while (nStream.DataAvailable);
+
+                            byte[] receiveBytes = mStream.GetBuffer();
+                            MessageCreator.parse(receiveBytes);
                         }
-
-                        NetworkStream nStream = client.GetStream();
-                        if (!nStream.CanRead)
-                            return;
-                        await using MemoryStream mStream = new MemoryStream();
-                        byte[] buffer = new byte[256];
-                        do
-                        {
-                            int dataSize = await nStream.ReadAsync(buffer, 0, buffer.Length);
-                            await mStream.WriteAsync(buffer, 0, dataSize);
-                        } while (nStream.DataAvailable);
-
-                        byte[] receiveBytes = mStream.GetBuffer();
-                        var ob = MessagePackSerializer.Deserialize<MusicValue>(receiveBytes);
-                        Console.WriteLine($"{ob.MusicNumber} is {ob.TimeCode}");
                     }
                 }
                 catch (MessagePackSerializationException e)
@@ -71,7 +74,6 @@ namespace LiveClient
                
             });
         }
-
         public void ReceiveStop() => Source?.Cancel();
 
         public void Close()

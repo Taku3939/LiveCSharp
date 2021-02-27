@@ -11,7 +11,7 @@ namespace LiveClient
         static string host = "localhost";
         static int port = 30000;
         private static readonly MusicValue musicValue = new MusicValue() {MusicNumber = 2, TimeCode = 22};
-
+        private static readonly MessageType _type = new MessageType(){type = typeof(MusicValue)};
         private static async Task Main(string[] args)
         {
             client = new Client();
@@ -22,8 +22,8 @@ namespace LiveClient
                 var line = Console.ReadLine();
                 if (line == "send")
                 {
-                    var serialize = MessagePackSerializer.Serialize(musicValue);
-                    await client.Send(serialize);
+                    var buffer =MessageCreator.Create(_type, musicValue);
+                    await client.Send(buffer);
                 }
                 else if (line == "quit")
                     break;
