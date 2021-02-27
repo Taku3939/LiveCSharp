@@ -1,6 +1,6 @@
 using MessagePack;
 
-namespace LiveClient
+namespace LiveCoreLibrary
 {
     [MessagePackObject]
     public class MusicValue

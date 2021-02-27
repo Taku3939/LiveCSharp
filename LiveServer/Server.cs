@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
+using System.Threading;
 using System.Threading.Tasks;
+using LiveCoreLibrary;
 using MessagePack;
 
 namespace LiveServer
@@ -11,83 +13,147 @@ namespace LiveServer
     public class Server
     {
         private readonly TcpListener _listener;
+        private readonly ISocketHolder _holder;
+        private readonly List<CancellationTokenSource> _sources;
 
-        private readonly List<TcpClient> _clients;
-
-        public Server(int port)
+        public Server(int port, ISocketHolder socketHolder)
         {
-            _clients = new List<TcpClient>();
+            _holder = socketHolder;
+            _sources = new List<CancellationTokenSource>();
             _listener = new TcpListener(IPAddress.Any, port);
             _listener.Start();
             Console.WriteLine($"Listening start...:{port}");
+        }
+
+        public void HealthCheck()
+        {
+            Task.Run(() =>
+            {
+                try
+                {
+                    while (true)
+                    {
+                        var clients = _holder.GetClients();
+                        List<TcpClient> removeList = new List<TcpClient>();
+                        foreach (var client in clients)
+                            if (!IsConnected(client.Client))
+                                removeList.Add(client);
+                        
+                        foreach (var client in removeList)
+                            _holder.Remove(client);
+                        
+                    }
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e.ToString());
+                }
+            });
+        }
+        
+        private static bool IsConnected(Socket socket)
+        {
+            try
+            {
+                return !(socket.Poll(1, SelectMode.SelectRead) && socket.Available == 0);
+            }
+            catch (SocketException) { return false; }
         }
 
         public void AcceptLoop()
         {
             Task.Run(async () =>
             {
-                while (true)
+                try
                 {
-                    List<Task<TcpClient>> tasks = new List<Task<TcpClient>>();
-                    while (_listener.Pending())
+                    while (true)
                     {
-                        var task = _listener.AcceptTcpClientAsync();
-                        tasks.Add(task);
+                        List<Task<TcpClient>> tasks = new List<Task<TcpClient>>();
+                        while (_listener.Pending())
+                        {
+                            var task = _listener.AcceptTcpClientAsync();
+                            tasks.Add(task);
+                        }
+
+                        await Task.WhenAll(tasks);
+
+                        foreach (var task in tasks)
+                        {
+                            var client = task.Result;
+                            var remoteEndPoint = (IPEndPoint) client.Client.RemoteEndPoint;
+                            Console.WriteLine($"Connected: [No name] " +
+                                              $"({remoteEndPoint.Address}: {remoteEndPoint.Port})");
+                            
+                            _holder.AddClient(client);
+                            Console.WriteLine("client count is " + _holder.GetClients().Count);
+                            //SocketLoop loop = new SocketLoop(client, _holder, 10);
+                            //loop.Run();
+                            //_sources.Add(loop.Cts);
+                        }
                     }
-
-                    await Task.WhenAll(tasks);
-
-                    foreach (var task in tasks)
-                    {
-                        var client = task.Result;
-                        var remoteEndPoint = (IPEndPoint) client.Client.RemoteEndPoint;
-                        Console.WriteLine($"Connected: [No name] " +
-                                          $"({remoteEndPoint.Address}: {remoteEndPoint.Port})");
-
-                        if (!_clients.Contains(client))
-                            _clients.Add(client);
-
-                        Loop(client);
-                        Console.WriteLine("client count is " + _clients.Count);
-                    }
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e.ToString());
                 }
             });
         }
 
-        public async Task Loop(TcpClient client)
+        public void ReceiveLoop()
         {
-            NetworkStream nStream = client.GetStream();
-            if (!nStream.CanRead)
+            Task.Run(() =>
             {
-                Console.WriteLine("Can not read");
-                return;
-            }
+                while (true)
+                {
+                    try
+                    {
+                        foreach (var client in _holder.GetClients())
+                        {
+                            while (client.Available != 0)
+                            {
+                                NetworkStream nStream = client.GetStream();
+                                if (!nStream.CanRead)
+                                {
+                                    Console.WriteLine("Can not read");
+                                    return;
+                                }
 
-            await using MemoryStream mStream = new MemoryStream();
-            byte[] buffer = new byte[256];
-            do
-            {
-                int dataSize = await nStream.ReadAsync(buffer, 0, buffer.Length);
-                await mStream.WriteAsync(buffer, 0, dataSize);
-            } while (nStream.DataAvailable);
+                                Task.Run(async () =>
+                                {
+                                    await using MemoryStream mStream = new MemoryStream();
+                                    byte[] buffer = new byte[256];
+                                    do
+                                    {
+                                        int dataSize = await nStream.ReadAsync(buffer, 0, buffer.Length);
+                                        await mStream.WriteAsync(buffer, 0, dataSize);
 
-            byte[] receiveBytes = mStream.GetBuffer();
-            var ob = MessagePackSerializer.Deserialize<MusicValue>(receiveBytes);
+                                    } while (nStream.DataAvailable);
 
-            Console.WriteLine($"{ob.MusicNumber} is {ob.TimeCode}");
-            Send(receiveBytes);
+                                    byte[] receiveBytes = mStream.GetBuffer();
+                                    var ob = MessagePackSerializer.Deserialize<MusicValue>(receiveBytes);
 
-            Loop(client);
-        }
+                                    Console.WriteLine($"{ob.MusicNumber} is {ob.TimeCode}");
 
-        public void Send(byte[] buffer)
-        {
-            Task.Run(async () =>
-            {
-                foreach (var c in _clients)
-                    if (c.Connected)
-                        await c.Client.SendAsync(buffer, SocketFlags.None);
+                                    foreach (var c in _holder.GetClients())
+                                        if (c.Connected)
+                                            await c.Client.SendAsync(buffer, SocketFlags.None);
+                                });
+                            }
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine(e.ToString());
+
+                    }
+                }
             });
+        }
+        
+        public void Close()
+        {
+            foreach (var cancellationTokenSource in _sources)
+                cancellationTokenSource.Cancel();
         }
     }
 }

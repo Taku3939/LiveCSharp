@@ -3,6 +3,7 @@ using System.IO;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
+using LiveCoreLibrary;
 using MessagePack;
 
 namespace LiveClient
@@ -59,10 +60,15 @@ namespace LiveClient
                         Console.WriteLine($"{ob.MusicNumber} is {ob.TimeCode}");
                     }
                 }
+                catch (MessagePackSerializationException e)
+                {
+                    Console.WriteLine(e);
+                }
                 catch (Exception e)
                 {
                     Console.WriteLine(e);
                 }
+               
             });
         }
 
