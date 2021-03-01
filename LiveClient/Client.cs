@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
@@ -6,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using LiveCoreLibrary;
 using MessagePack;
+using UniRx;
 
 namespace LiveClient
 {
@@ -15,6 +17,11 @@ namespace LiveClient
         private CancellationTokenSource Source;
         public Client() => client = new TcpClient();
         public async Task Connect(string host, int port) => await client.ConnectAsync(host, port);
+
+        private readonly Subject<UniRx.Tuple<MessageType, byte[]>> _subject =
+            new Subject<UniRx.Tuple<MessageType, byte[]>>();
+
+        public UniRx.IObservable<UniRx.Tuple<MessageType, byte[]>> OnMessageReceived => this._subject;
 
         public async Task Send(byte[] serialize)
         {
@@ -59,7 +66,8 @@ namespace LiveClient
                             } while (nStream.DataAvailable);
 
                             byte[] receiveBytes = mStream.GetBuffer();
-                            MessageCreator.parse(receiveBytes);
+                            var body = MessageParser.Decode(receiveBytes, out var type);
+                            _subject.OnNext(new UniRx.Tuple<MessageType, byte[]>(type, body));
                         }
                     }
                 }
@@ -71,9 +79,9 @@ namespace LiveClient
                 {
                     Console.WriteLine(e);
                 }
-               
             });
         }
+
         public void ReceiveStop() => Source?.Cancel();
 
         public void Close()
