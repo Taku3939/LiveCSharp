@@ -64,10 +64,13 @@ namespace LiveClient
                                 int dataSize = await nStream.ReadAsync(buffer, 0, buffer.Length);
                                 await mStream.WriteAsync(buffer, 0, dataSize);
                             } while (nStream.DataAvailable);
-
+                            
                             byte[] receiveBytes = mStream.GetBuffer();
-                            var body = MessageParser.Decode(receiveBytes, out var type);
-                            _subject.OnNext(new UniRx.Tuple<MessageType, byte[]>(type, body));
+                            if (MessageParser.CheckProtocol(buffer))
+                            {
+                                var body = MessageParser.Decode(receiveBytes, out var type);
+                                _subject.OnNext(new UniRx.Tuple<MessageType, byte[]>(type, body));
+                            }
                         }
                     }
                 }

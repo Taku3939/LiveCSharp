@@ -148,10 +148,12 @@ namespace LiveServer
 
                                     } while (nStream.DataAvailable);
 
-                                    //send
-                                    foreach (var c in _holder.GetClients())
-                                        if (c.Connected)
-                                            await c.Client.SendAsync(buffer, SocketFlags.None);
+                                    if (client.Connected && MessageParser.CheckProtocol(buffer))
+                                    { 
+                                        foreach (var c in _holder.GetClients()) 
+                                            if (c.Connected)
+                                                await c.Client.SendAsync(buffer, SocketFlags.None);
+                                    }
                                 });
                             }
                         }
@@ -161,7 +163,6 @@ namespace LiveServer
                     catch (Exception e)
                     {
                         Console.WriteLine(e.ToString());
-
                     }
                 }
             });
