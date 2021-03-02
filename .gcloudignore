@@ -1,0 +1,9 @@
+.git
+.gitignore
+
+bin/
+obj/
+/packages/
+
+.idea
+.DS_Store
