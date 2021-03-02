@@ -37,27 +37,31 @@ namespace LiveServer
         /// <param name="interval"></param>
         public void HealthCheck(int interval)
         {
+            CancellationTokenSource source = new CancellationTokenSource();   
+            _sources.Add(source);
             Task.Run(async () =>
             {
-                try
+                while (true)
                 {
-                    while (true)
+                    try
                     {
+                        if (source.IsCancellationRequested) return;
                         var clients = _holder.GetClients();
                         List<TcpClient> removeList = new List<TcpClient>();
                         foreach (var client in clients)
                             if (!IsConnected(client.Client))
                                 removeList.Add(client);
-                        
-                        foreach (var client in removeList) 
+
+                        foreach (var client in removeList)
                             _holder.Remove(client);
 
                         await Task.Delay(interval);
+
                     }
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine(e.ToString());
+                    catch (Exception e)
+                    {
+                        Console.WriteLine(e.ToString());
+                    }
                 }
             });
         }
@@ -77,12 +81,15 @@ namespace LiveServer
         /// <param name="interval"></param>
         public void AcceptLoop(int interval)
         {
+            CancellationTokenSource source = new CancellationTokenSource();   
+            _sources.Add(source);
             Task.Run(async () =>
             {
-                try
+                while (true)
                 {
-                    while (true)
+                    try
                     {
+                        if (source.IsCancellationRequested) return;
                         List<Task<TcpClient>> tasks = new List<Task<TcpClient>>();
                         while (_listener.Pending())
                         {
@@ -98,17 +105,19 @@ namespace LiveServer
                             var remoteEndPoint = (IPEndPoint) client.Client.RemoteEndPoint;
                             Console.WriteLine($"Connected: [No name] " +
                                               $"({remoteEndPoint.Address}: {remoteEndPoint.Port})");
-                            
+
                             _holder.Add(client);
                             Console.WriteLine("client count is " + _holder.GetClients().Count);
                         }
 
                         await Task.Delay(interval);
+
                     }
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine(e.ToString());
+                    catch (Exception e)
+                    {
+                        Console.WriteLine(e.ToString());
+
+                    }
                 }
             });
         }
@@ -120,12 +129,15 @@ namespace LiveServer
         /// <param name="interval"></param>
         public void ReceiveLoop(int interval)
         {
+            CancellationTokenSource source = new CancellationTokenSource();   
+            _sources.Add(source);
             Task.Run(async () =>
             {
                 while (true)
                 {
                     try
                     {
+                        if (source.IsCancellationRequested) return; 
                         foreach (var client in _holder.GetClients())
                         {
                             while (client.Available != 0)

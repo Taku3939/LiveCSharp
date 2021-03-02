@@ -1,7 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using LiveClient;
 using MessagePack;
 
 namespace LiveCoreLibrary
@@ -17,9 +14,9 @@ namespace LiveCoreLibrary
         /// <param name="t"></param>
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
-        public static byte[] Encode<T>(MessageType _type, T t)
+        public static byte[] Encode<T>(T t)
         {
-         
+            var _type = new MessageType() {type = typeof(T)};
             var b_type = MessagePackSerializer.Serialize(_type);
             var b_value = MessagePackSerializer.Serialize<T>(t);
             byte[] protocol = new byte[3] {(byte)'V', (byte)'L', (byte)'L'};
@@ -60,6 +57,7 @@ namespace LiveCoreLibrary
             MessageType messageType = MessagePackSerializer.Deserialize<MessageType>(b_type);
             type = messageType;
             return b_value;
+            
         }
     }
 }

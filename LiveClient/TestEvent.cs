@@ -7,7 +7,7 @@ namespace LiveClient
     {
         protected override void Received(MusicValue t)
         {
-            System.Console.WriteLine($"MusicNumber : {t.MusicNumber}, TimeCode : {t.TimeCode}, Message : {t.message}");
+            Console.WriteLine($"MusicNumber : {t.MusicNumber}, TimeCode : {t.TimeCode}, Message : {t.State}");
         }
     }
 }
