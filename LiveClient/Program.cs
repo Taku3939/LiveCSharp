@@ -16,7 +16,7 @@ namespace LiveClient
         {
             client = new Client();
             await client.Connect(host, port);
-
+            
             client.OnMessageReceived
                 .Where(e => e.Item1.type == Event.GetMessageType())
                 .Subscribe(e => Event.Invoke(e.Item2));
@@ -37,6 +37,7 @@ namespace LiveClient
                     break;
             }
 
+            client.Close();
             Console.WriteLine("終了します.");
         }
     }

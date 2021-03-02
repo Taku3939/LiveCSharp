@@ -6,16 +6,18 @@ using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 using LiveCoreLibrary;
-using MessagePack;
 
 namespace LiveServer
 {
+    /// <summary>
+    /// Serverクラス
+    /// </summary>
     public class Server
     {
         private readonly TcpListener _listener;
         private readonly ISocketHolder _holder;
         private readonly List<CancellationTokenSource> _sources;
-
+        
         /// <summary>
         /// コンストラクタ
         /// </summary>
@@ -66,6 +68,11 @@ namespace LiveServer
             });
         }
         
+        /// <summary>
+        /// 接続確認用関数
+        /// </summary>
+        /// <param name="socket"></param>
+        /// <returns></returns>
         private static bool IsConnected(Socket socket)
         {
             try
@@ -137,8 +144,9 @@ namespace LiveServer
                 {
                     try
                     {
-                        if (source.IsCancellationRequested) return; 
-                        foreach (var client in _holder.GetClients())
+                        if (source.IsCancellationRequested) return;
+                        var clients = _holder.GetClients();
+                        foreach (var client in clients)
                         {
                             while (client.Available != 0)
                             {
@@ -180,10 +188,21 @@ namespace LiveServer
             });
         }
         
+        
+        /// <summary>
+        /// 終了
+        /// </summary>
         public void Close()
         {
+            //全てのループの終了
             foreach (var cancellationTokenSource in _sources)
                 cancellationTokenSource.Cancel();
+
+            //クライアントごとのclose
+            var clients = _holder.GetClients();
+            foreach (var c in clients)
+                c.Close();
+            
         }
     }
 }
