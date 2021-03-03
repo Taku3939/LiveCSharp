@@ -1,11 +1,14 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 using LiveCoreLibrary;
+
+using UniRx;
 
 namespace LiveServer
 {
@@ -17,7 +20,13 @@ namespace LiveServer
         private readonly TcpListener _listener;
         private readonly ISocketHolder _holder;
         private readonly List<CancellationTokenSource> _sources;
+
+        private readonly Subject<UniRx.Tuple<MessageType, byte[], TcpClient>> onMessageReceivedSubject =
+            new Subject<UniRx.Tuple<MessageType, byte[], TcpClient>>();
         
+        public UniRx.IObservable<UniRx.Tuple<MessageType, byte[], TcpClient>> OnMessageReceived =>
+            this.onMessageReceivedSubject;
+
         /// <summary>
         /// コンストラクタ
         /// </summary>
@@ -39,7 +48,7 @@ namespace LiveServer
         /// <param name="interval"></param>
         public void HealthCheck(int interval)
         {
-            CancellationTokenSource source = new CancellationTokenSource();   
+            CancellationTokenSource source = new CancellationTokenSource();
             _sources.Add(source);
             Task.Run(async () =>
             {
@@ -57,17 +66,16 @@ namespace LiveServer
                         foreach (var client in removeList)
                             _holder.Remove(client);
 
-                        await Task.Delay(interval);
-
+                        await Task.Delay(interval, source.Token);
                     }
                     catch (Exception e)
                     {
                         Console.WriteLine(e.ToString());
                     }
                 }
-            });
+            }, source.Token);
         }
-        
+
         /// <summary>
         /// 接続確認用関数
         /// </summary>
@@ -79,7 +87,10 @@ namespace LiveServer
             {
                 return !(socket.Poll(1, SelectMode.SelectRead) && socket.Available == 0);
             }
-            catch (SocketException) { return false; }
+            catch (SocketException)
+            {
+                return false;
+            }
         }
 
         /// <summary>
@@ -88,7 +99,7 @@ namespace LiveServer
         /// <param name="interval"></param>
         public void AcceptLoop(int interval)
         {
-            CancellationTokenSource source = new CancellationTokenSource();   
+            CancellationTokenSource source = new CancellationTokenSource();
             _sources.Add(source);
             Task.Run(async () =>
             {
@@ -117,16 +128,14 @@ namespace LiveServer
                             Console.WriteLine("client count is " + _holder.GetClients().Count);
                         }
 
-                        await Task.Delay(interval);
-
+                        await Task.Delay(interval, source.Token);
                     }
                     catch (Exception e)
                     {
                         Console.WriteLine(e.ToString());
-
                     }
                 }
-            });
+            }, source.Token);
         }
 
         /// <summary>
@@ -136,12 +145,13 @@ namespace LiveServer
         /// <param name="interval"></param>
         public void ReceiveLoop(int interval)
         {
-            CancellationTokenSource source = new CancellationTokenSource();   
+            CancellationTokenSource source = new CancellationTokenSource();
             _sources.Add(source);
             Task.Run(async () =>
             {
                 while (true)
                 {
+                   
                     try
                     {
                         if (source.IsCancellationRequested) return;
@@ -163,22 +173,21 @@ namespace LiveServer
                                     byte[] buffer = new byte[256];
                                     do
                                     {
-                                        int dataSize = await nStream.ReadAsync(buffer, 0, buffer.Length);
-                                        await mStream.WriteAsync(buffer, 0, dataSize);
-
+                                        int dataSize = await nStream.ReadAsync(buffer, 0, buffer.Length, source.Token);
+                                        await mStream.WriteAsync(buffer, 0, dataSize, source.Token);
                                     } while (nStream.DataAvailable);
 
                                     if (client.Connected && MessageParser.CheckProtocol(buffer))
-                                    { 
-                                        foreach (var c in _holder.GetClients()) 
-                                            if (c.Connected)
-                                                await c.Client.SendAsync(buffer, SocketFlags.None);
+                                    {
+                                        var type = MessageParser.DecodeType(buffer);
+                                        onMessageReceivedSubject.OnNext(
+                                                 new UniRx.Tuple<MessageType, byte[], TcpClient>(type, buffer, client));
                                     }
-                                });
+                                }, source.Token);
                             }
                         }
-                        
-                        await Task.Delay(interval);
+
+                        await Task.Delay(interval, source.Token);
                     }
                     catch (Exception e)
                     {
@@ -187,8 +196,8 @@ namespace LiveServer
                 }
             });
         }
-        
-        
+
+
         /// <summary>
         /// 終了
         /// </summary>
@@ -202,7 +211,6 @@ namespace LiveServer
             var clients = _holder.GetClients();
             foreach (var c in clients)
                 c.Close();
-            
         }
     }
 }

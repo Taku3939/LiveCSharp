@@ -27,9 +27,8 @@ namespace LiveServer
         {
             List<TcpClient> newList = new List<TcpClient>();
             foreach (var c in _clients)
-            {
                 newList.Add(c);
-            }
+            
             this.copy = newList;
         }
 
