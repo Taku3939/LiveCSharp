@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Net.Http;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -53,7 +54,6 @@ namespace LiveClient
                                 Console.WriteLine("ClientがCloseしています");
                                 return;
                             }
-
                             NetworkStream nStream = client.GetStream();
                             if (!nStream.CanRead)
                                 return;
@@ -64,12 +64,12 @@ namespace LiveClient
                                 int dataSize = await nStream.ReadAsync(buffer, 0, buffer.Length);
                                 await mStream.WriteAsync(buffer, 0, dataSize);
                             } while (nStream.DataAvailable);
-                            
+
                             byte[] receiveBytes = mStream.GetBuffer();
                             if (MessageParser.CheckProtocol(buffer))
                             {
-                                var body = MessageParser.Decode(receiveBytes, out var type);
-                                _subject.OnNext(new UniRx.Tuple<MessageType, byte[]>(type, body));
+                                var type = MessageParser.DecodeType(receiveBytes);
+                                _subject.OnNext(new UniRx.Tuple<MessageType, byte[]>(type, buffer));
                             }
                         }
                     }
@@ -84,9 +84,9 @@ namespace LiveClient
                 }
             });
         }
-
+        
         public void ReceiveStop() => Source?.Cancel();
-
+        
         public void Close()
         {
             ReceiveStop();

@@ -29,7 +29,7 @@ namespace LiveClient
                 {
                     Console.WriteLine("メッセージを入力してください...");
                     var r = Console.ReadLine();
-                    var m = new MusicValue() {MusicNumber = 2, TimeCode = 22, State = 0};
+                    var m = new MusicValue {TimeCode = 2, State = 22, MusicNumber  = 0};
                     var buffer = MessageParser.Encode(m);
                     await client.Send(buffer);
                 }
