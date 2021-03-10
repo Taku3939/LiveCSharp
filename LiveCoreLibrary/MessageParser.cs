@@ -16,7 +16,7 @@ namespace LiveCoreLibrary
         /// <returns></returns>
         public static byte[] Encode<T>(T t)
         {
-            var _type = new MessageType {MethodType = (int) MethodType.Post, type = typeof(T)};
+            var _type = new MessageType(MethodType.Post, typeof(T));
             var b_type = MessagePackSerializer.Serialize(_type);
             var b_value = MessagePackSerializer.Serialize<T>(t);
             byte[] protocol = new byte[3] {(byte) 'V', (byte) 'L', (byte) 'L'};
@@ -35,7 +35,7 @@ namespace LiveCoreLibrary
 
         public static byte[] EncodeGet(MethodType type)
         {
-            var _type = new MessageType() {MethodType = (int) type, type = typeof(LiveCoreLibrary.Unit)};
+            var _type = new MessageType( type, typeof(LiveCoreLibrary.Unit));
             var b_type = MessagePackSerializer.Serialize(_type);
             var b_value = MessagePackSerializer.Serialize(new LiveCoreLibrary.Unit());
             byte[] protocol = new byte[3] {(byte) 'V', (byte) 'L', (byte) 'L'};

@@ -31,7 +31,7 @@ namespace LiveClient
                 Console.WriteLine("メッセージを入力してください...");
                 var r = Console.ReadLine();
                 if (r == "quit") break;
-                var m = new ChatMessage() {id = new Random().Next(), message = $"{name} : {r}"};
+                var m = new ChatMessage(new Random().Next(), $"{name} : {r}");
                 var buffer = MessageParser.Encode(m);
                 client.SendAsync(buffer);
             }

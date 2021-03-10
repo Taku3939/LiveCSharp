@@ -22,13 +22,13 @@ namespace LiveServer
 
             //現在のミュージックの取得
             server.OnMessageReceived
-                .Where(e => (MethodType)e.Item1.MethodType == MethodType.GetMusicValue)
+                .Where(e => (MethodType)e.Item1.methodType == MethodType.GetMusicValue)
                 .Where(e => e.Item1.type == typeof(LiveCoreLibrary.Unit))
                 .Subscribe(async e => await e.Item3.Client.SendAsync(MessageParser.Encode(Time.Value), SocketFlags.None));
             //MusicValueの更新
             server.OnMessageReceived
                 .Where(e => e.Item1.type == typeof(MusicValue))
-                .Where(e => (MethodType)e.Item1.MethodType == MethodType.Post)
+                .Where(e => (MethodType)e.Item1.methodType == MethodType.Post)
                 .Subscribe(async e =>
                 {
                     try
@@ -41,7 +41,7 @@ namespace LiveServer
             
             //メッセージの一括送信
             server.OnMessageReceived
-                .Where(e => (MethodType)e.Item1.MethodType == MethodType.Post)
+                .Where(e => (MethodType)e.Item1.methodType == MethodType.Post)
                 .Subscribe(async e =>
                 {
                     foreach (var client in holder.GetClients())

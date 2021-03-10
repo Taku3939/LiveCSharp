@@ -10,7 +10,7 @@ namespace LiveServer
 {
     public static class Time
     {
-        public static MusicValue Value = new MusicValue {TimeCode = 0, MusicNumber = 0, State = (int) PlayState.Playing};
+        public static MusicValue Value = new MusicValue(0, 0, PlayState.Playing);
 
         public static double TotalTime;
         private static CancellationTokenSource _source;
