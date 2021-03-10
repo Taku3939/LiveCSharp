@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 using LiveCoreLibrary;
+using MessagePack;
 using UniRx;
 
 namespace LiveClient
@@ -10,31 +11,29 @@ namespace LiveClient
         private static Client client;
         private static string host = "localhost";
         private static int port = 30000;
-        private static readonly TestEvent Event = new TestEvent();
 
         private static async Task Main(string[] args)
         {
             client = new Client();
             await client.Connect(host, port);
             
-            client.OnMessageReceived
-                .Where(e => e.Item1.type == Event.GetMessageType())
-                .Subscribe(e => Event.Invoke(e.Item2));
-
+            //チャットを受け取ったときのイベント登録
+            client.OnMessageReceived?
+                .Where(e => e.Item1.type == typeof(ChatMessage))
+                .Subscribe(e => Console.WriteLine(MessagePackSerializer.Deserialize<ChatMessage>(e.Item2).message));
+            
+            //受信開始
             client.ReceiveStart();
+            Console.WriteLine("名前を入力してください...");
+            var name = Console.ReadLine();
             while (true)
             {
-                var line = Console.ReadLine();
-                if (line == "send")
-                {
-                    Console.WriteLine("メッセージを入力してください...");
-                    var r = Console.ReadLine();
-                    var m = new MusicValue {TimeCode = 2, State = 22, MusicNumber  = 0};
-                    var buffer = MessageParser.Encode(m);
-                    await client.Send(buffer);
-                }
-                else if (line == "quit")
-                    break;
+                Console.WriteLine("メッセージを入力してください...");
+                var r = Console.ReadLine();
+                if (r == "quit") break;
+                var m = new ChatMessage() {id = new Random().Next(), message = $"{name} : {r}"};
+                var buffer = MessageParser.Encode(m);
+                client.SendAsync(buffer);
             }
 
             client.Close();

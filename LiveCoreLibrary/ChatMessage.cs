@@ -4,7 +4,7 @@ namespace LiveCoreLibrary
     [MessagePackObject]
     public class ChatMessage
     {
-        [Key(0)] public string id;
+        [Key(0)] public long id;
         [Key(1)] public string message;
     }
 }

@@ -1,9 +1,6 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Net.Http;
 using System.Net.Sockets;
-using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using LiveCoreLibrary;
@@ -17,22 +14,47 @@ namespace LiveClient
         private readonly TcpClient client;
         private CancellationTokenSource Source;
         public Client() => client = new TcpClient();
-        public async Task Connect(string host, int port) => await client.ConnectAsync(host, port);
 
-        private readonly Subject<UniRx.Tuple<MessageType, byte[]>> _subject =
-            new Subject<UniRx.Tuple<MessageType, byte[]>>();
-
-        public UniRx.IObservable<UniRx.Tuple<MessageType, byte[]>> OnMessageReceived => this._subject;
-
-        public async Task Send(byte[] serialize)
+        public async Task Connect(string host, int port)
         {
-            if (!client.Connected)
-            {
-                Console.WriteLine("ClientがCloseしています");
-                return;
-            }
+            await client.ConnectAsync(host, port);
+            Source = new CancellationTokenSource();
+            OnConnectedSubject.OnNext(new UniRx.Unit());
+        }
 
-            await client.Client.SendAsync(serialize, SocketFlags.None);
+        private readonly Subject<UniRx.Tuple<MessageType, byte[]>> onMessageReceivedSubject =
+            new Subject<UniRx.Tuple<MessageType, byte[]>>();
+        private readonly Subject<UniRx.Unit> OnConnectedSubject = new Subject<UniRx.Unit>();
+
+        public UniRx.IObservable<UniRx.Tuple<MessageType, byte[]>> OnMessageReceived => this.onMessageReceivedSubject;
+        public UniRx.IObservable<UniRx.Unit> OnConnected => this.OnConnectedSubject;
+        /// <summary>
+        /// 非同期送信
+        /// </summary>
+        /// <param name="t">MessagePack Object</param>
+        public void SendAsync<T>(T t)
+        {
+            var serialize = MessageParser.Encode(t);
+            if (!client.Connected) { return; }
+
+            var sArgs = new SocketAsyncEventArgs();
+            sArgs.SetBuffer(serialize, 0, serialize.Length);
+            sArgs.UserToken = serialize;
+            client.Client.SendAsync(sArgs);
+        }
+
+        /// <summary>
+        /// 非同期送信
+        /// </summary>
+        /// <param name="serialize">This byte array must be serialized by message pack</param>
+        public void SendAsync(byte[] serialize)
+        {
+            if (!client.Connected){return;}
+
+            var sArgs = new SocketAsyncEventArgs();
+            sArgs.SetBuffer(serialize, 0, serialize.Length);
+            sArgs.UserToken = serialize;
+            client.Client.SendAsync(sArgs);
         }
 
         public void ReceiveStart()
@@ -68,8 +90,8 @@ namespace LiveClient
                             byte[] receiveBytes = mStream.GetBuffer();
                             if (MessageParser.CheckProtocol(buffer))
                             {
-                                var type = MessageParser.DecodeType(receiveBytes);
-                                _subject.OnNext(new UniRx.Tuple<MessageType, byte[]>(type, buffer));
+                                var body = MessageParser.Decode(receiveBytes, out var type);
+                                onMessageReceivedSubject.OnNext(new UniRx.Tuple<MessageType, byte[]>(type, body));
                             }
                         }
                     }
@@ -82,9 +104,54 @@ namespace LiveClient
                 {
                     Console.WriteLine(e);
                 }
-            });
+            },Source.Token);
+        }
+        /// <summary>
+        /// 接続状態監視用ループ
+        /// 切断時リストからクライアントを削除します
+        /// </summary>
+        /// <param name="interval"></param>
+        public void HealthCheck(int interval)
+        {
+            Task.Run(async () =>
+            {
+                while (true)
+                {
+                    try
+                    {
+                        if (Source.IsCancellationRequested) return;
+                        if (!CheckConnected(client.Client))
+                        {
+                            Close();
+                        }
+
+                        await Task.Delay(interval);
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine(e.ToString());
+                    }
+                }
+            }, Source.Token);
         }
         
+        /// <summary>
+        /// 接続確認用関数
+        /// </summary>
+        /// <param name="socket"></param>
+        /// <returns></returns>
+        private static bool CheckConnected(Socket socket)
+        {
+            try
+            {
+                return !(socket.Poll(1, SelectMode.SelectRead) && socket.Available == 0);
+            }
+            catch (SocketException)
+            {
+                return false;
+            }
+        }
+
         public void ReceiveStop() => Source?.Cancel();
         
         public void Close()
