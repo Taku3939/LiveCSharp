@@ -137,12 +137,6 @@ MonoBehaviour:
     m_SerializedLabels: []
     m_MainAsset: {fileID: 0}
     m_TargetAsset: {fileID: 0}
-  - m_GUID: 624d51e1b568e1c45821dfb1073ab831
-    m_Address: Assets/Face.mat
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    m_MainAsset: {fileID: 0}
-    m_TargetAsset: {fileID: 0}
   - m_GUID: 91e03f6fb74cfb74aa0fb4bed6d59799
     m_Address: Assets/Scenes/Client.unity
     m_ReadOnly: 0

@@ -24,6 +24,6 @@ namespace UI.Presenter
         }
         
         public void SetText(ChatMessage message)
-            => _text.text += $"id :{message.id} messsage :{message.message}\n";
+            => _text.text += $"username :{message.username} messsage :{message.message}\n";
     }
 }

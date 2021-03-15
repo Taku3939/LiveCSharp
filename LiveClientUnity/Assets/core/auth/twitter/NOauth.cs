@@ -23,13 +23,13 @@ namespace Auth.Twitter
         /// <returns></returns>
         public string GetAuthTokenUrl() => tu.GetOAuthToken(ConsumerKey, ConsumerSecret);
 
-        public bool AuthorizeVerification(string pincode, out string userId)
+        public bool AuthorizeVerification(string pinCode, out string userId)
         {
             try
             {
                 // UserIDやAccessTokenを取得
                 tu.GetOAuthAccessTokenWithOAuthVerifier(
-                    pincode,
+                    pinCode,
                     ConsumerKey,
                     ConsumerSecret,
                     out var Token, out var TokenSecret, out userId);

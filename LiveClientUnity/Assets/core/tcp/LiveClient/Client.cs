@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using LiveCoreLibrary;
@@ -24,8 +25,10 @@ namespace LiveClient
             new Subject<Tuple<MessageType, byte[]>>();
 
         private readonly Subject<Unit> OnConnectedSubject = new Subject<Unit>();
+        private readonly Subject<Unit> OnDisconnectedSubject = new Subject<Unit>();
         public IObservable<Tuple<MessageType, byte[]>> OnMessageReceived => this.onMessageReceivedSubject;
         public IObservable<Unit> OnConnected => this.OnConnectedSubject;
+        public IObservable<Unit> OnDisconnected => this.OnDisconnectedSubject;
 
         /// <summary>
         /// This Constructor must call by main thread
@@ -57,6 +60,11 @@ namespace LiveClient
         /// <returns></returns>
         public async Task ConnectAsync(IPAddress host, int port)
         {
+            if (IsConnected)
+            {
+                Close();
+                await Task.Delay(100);
+            }
             await client.ConnectAsync(host, port);
             OnConnectedSubject.OnNext(new LiveCoreLibrary.Unit());
         }
@@ -198,10 +206,10 @@ namespace LiveClient
         {
             ReceiveStop();
             client?.Close();
-            OnConnectedSubject.OnCompleted();
+            OnDisconnectedSubject.OnNext(new Unit());
         }
-        
-        
+
+
         /// <summary>
         /// 接続確認用関数
         /// </summary>
@@ -218,7 +226,5 @@ namespace LiveClient
                 return false;
             }
         }
-
     }
-    
 }

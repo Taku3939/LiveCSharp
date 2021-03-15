@@ -12,7 +12,7 @@ namespace StreamServer
         public ConcurrentDictionary<long, User> Users = new ConcurrentDictionary<long, User>();
 
         public long selfId ;
-
+        public string screenName;
         public void Initialize()
         {
             Users = new ConcurrentDictionary<long, User>();

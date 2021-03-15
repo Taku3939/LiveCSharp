@@ -3,6 +3,7 @@
 using System.Threading.Tasks;
 using Auth.Twitter;
 using StreamServer;
+using UniRx;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.SceneManagement;
@@ -45,7 +46,9 @@ namespace Auth
             {
                 if (oauth.AuthorizeVerification(pincodeField.text, out var id))
                 {
-                    dataHolder.selfId = long.Parse(id);
+                    var obj = await NOauth.GetIcon(long.Parse(id));
+                    dataHolder.selfId = obj.userId;
+                    dataHolder.screenName = obj.screenName;
                     await OnSuccess();
                 }
             });
