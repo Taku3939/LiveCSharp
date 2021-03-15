@@ -9,7 +9,7 @@ public class UdpSocketHolder : ScriptableObject
 {
     [SerializeField] public string serverIpAddress;
     [SerializeField] public int serverPort;
-    [NonSerialized]public IPEndPoint RemoteEndPoint;
+    [NonSerialized] public IPEndPoint RemoteEndPoint;
 
     private void OnEnable()
     {

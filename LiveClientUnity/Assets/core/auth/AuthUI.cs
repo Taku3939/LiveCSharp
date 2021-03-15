@@ -38,9 +38,9 @@ namespace Auth
         [SerializeField] private string sceneName;
         
         [SerializeField] private DataHolder dataHolder;
-        private readonly NOauth oauth = new NOauth();
         public void Start()
         {
+            NOauth oauth = NOauth.Instance;
             this.OpenAuthPageButton.onClick.AddListener(() => oauth.OpenAuthSite());
             this.PincodeVerificationButton.onClick.AddListener(async () =>
             {

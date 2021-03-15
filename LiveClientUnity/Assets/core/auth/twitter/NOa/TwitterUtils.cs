@@ -5,6 +5,8 @@ using System.Web;
 using System.Net;
 using System.IO;
 using System.Text;
+using UnityEngine;
+using UnityEngine.Networking;
 
 namespace Narange.Twitter
 {
@@ -63,6 +65,13 @@ namespace Narange.Twitter
       oAuth.TokenSecret = AccessTokenSecret;
       xml = oAuth.oAuthWebRequest(OAuthTwitter.Method.POST, url, String.Empty, mes, false, string.Empty, useAuthorizationHeader);
       return xml;
+    }
+    public void UpdateStatus(string status, string ConsumerKey, string ConsumerSecret, string AccessToken, string AccessTokenSecret,
+      bool useAuthorizationHeader)
+    {
+      string encStatus = UnityWebRequest.EscapeURL(status, System.Text.Encoding.UTF8);
+      encStatus = string.Format("status={0:s}", encStatus);
+      PostDataOAuth(UPDATE_STATUS, encStatus, ConsumerKey, ConsumerSecret, AccessToken, AccessTokenSecret, useAuthorizationHeader);
     }
   }
 }

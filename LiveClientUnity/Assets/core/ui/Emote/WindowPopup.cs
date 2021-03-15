@@ -7,7 +7,7 @@ using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
-/// エモートを送信するためのクラス
+/// Windowをポップアップさせるための汎用クラス
 /// </summary>
 [RequireComponent(typeof(Animator))]
 public class WindowPopup : MonoBehaviour

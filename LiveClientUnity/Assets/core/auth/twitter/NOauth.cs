@@ -9,11 +9,22 @@ namespace Auth.Twitter
 {
     public class NOauth
     {
+        public static NOauth Instance
+        {
+            get
+            {
+                if (instance == null) instance = new NOauth();
+                return instance;
+            }
+        }
+
+        private static NOauth instance;
+        private NOauth(){}
         // CONSUMER 秘密鍵
         private const string ConsumerKey = "5eNK6zHTeKwSkaRaTtEElI6iw";
         private const string ConsumerSecret = "4BXegpxFThNyb5Yuhb4gdIu9693zgnCyMTqodW8zbbGEDYMwio";
-
         private readonly TwitterUtils tu = new TwitterUtils();
+        private string Token, TokenSecret;
 
         public void OpenAuthSite() => System.Diagnostics.Process.Start(GetAuthTokenUrl());
 
@@ -32,8 +43,9 @@ namespace Auth.Twitter
                     pinCode,
                     ConsumerKey,
                     ConsumerSecret,
-                    out var Token, out var TokenSecret, out userId);
+                    out Token, out TokenSecret, out userId);
                 return true;
+                
             }
             catch (Exception e)
             {
@@ -42,7 +54,19 @@ namespace Auth.Twitter
                 return false;
             }
         }
-
+        
+        public void Tweet(string message)
+        {
+            try
+            {
+                tu.UpdateStatus(message, ConsumerKey, ConsumerSecret, Token, TokenSecret, true);
+            }
+            catch (Exception e)
+            {
+                Debug.Log(e);
+            }
+         
+        }
         public static async Task<TwitterObj> GetIcon(long userId)
         {
             // Curl でアイコンのURLを取得

@@ -107,7 +107,7 @@ namespace Narange.Twitter
             if (postData.Length > 0) {
               postData += "&";
             }
-            qs[key] = UnityWebRequest.EscapeURL(qs[key]);
+            qs[key] = UnityWebRequest.UnEscapeURL(qs[key]);
             //qs[key] = this.UrlEncode(qs[key]);
             qs[key] = this.UrlEncode(qs[key], Encoding.UTF8);
             postData += key + "=" + qs[key];
