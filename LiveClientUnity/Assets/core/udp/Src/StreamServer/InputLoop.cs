@@ -1,4 +1,4 @@
-﻿﻿using System;
+﻿using System;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
@@ -118,11 +118,11 @@ namespace StreamServer
                 udp = null;
                 throw;
             }
-            catch (Exception e)
-            {
-                Debug.LogError(e);
-                throw;
-            }
+            // catch (Exception e)
+            // {
+            //     Debug.LogError(e);
+            //     throw;
+            // }
         }
         
         public void Stop()

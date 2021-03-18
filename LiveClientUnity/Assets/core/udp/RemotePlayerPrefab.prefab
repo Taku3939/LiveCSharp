@@ -13,7 +13,6 @@ GameObject:
   - component: {fileID: 4987298094141824502}
   - component: {fileID: 4987298094141824501}
   - component: {fileID: 5616417628634000071}
-  - component: {fileID: 4987298094141824499}
   - component: {fileID: 2932789386317285828}
   m_Layer: 0
   m_Name: RemotePlayerPrefab
@@ -115,22 +114,6 @@ MonoBehaviour:
   _name: {fileID: 7259737678419159335}
   _renderer: {fileID: 7795985081348599846}
   source: {fileID: 2100000, guid: 624d51e1b568e1c45821dfb1073ab831, type: 2}
---- !u!54 &4987298094141824499
-Rigidbody:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4987298094141824011}
-  serializedVersion: 2
-  m_Mass: 1
-  m_Drag: 0
-  m_AngularDrag: 0.05
-  m_UseGravity: 1
-  m_IsKinematic: 0
-  m_Interpolate: 0
-  m_Constraints: 0
-  m_CollisionDetection: 0
 --- !u!114 &2932789386317285828
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -143,7 +126,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 96a316a768064f2db767dfc5219eb287, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  userId: 1113776796829224960
+  userId: 4
   dataHolder: {fileID: 11400000, guid: 079614da64568244abbcfff29e8080b9, type: 2}
 --- !u!1 &7795985081348599868
 GameObject:

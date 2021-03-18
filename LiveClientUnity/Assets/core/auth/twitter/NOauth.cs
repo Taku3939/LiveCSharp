@@ -1,8 +1,9 @@
 using System;
+using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
+using CoreTweet;
 using UnityEngine;
-using Narange.Twitter;
 using Newtonsoft.Json.Linq;
 
 namespace Auth.Twitter
@@ -19,54 +20,61 @@ namespace Auth.Twitter
         }
 
         private static NOauth instance;
-        private NOauth(){}
+        private readonly OAuth.OAuthSession session;
+
         // CONSUMER 秘密鍵
         private const string ConsumerKey = "5eNK6zHTeKwSkaRaTtEElI6iw";
         private const string ConsumerSecret = "4BXegpxFThNyb5Yuhb4gdIu9693zgnCyMTqodW8zbbGEDYMwio";
-        private readonly TwitterUtils tu = new TwitterUtils();
-        private string Token, TokenSecret;
-
-        public void OpenAuthSite() => System.Diagnostics.Process.Start(GetAuthTokenUrl());
-
         /// <summary>
-        /// Twitter認証ページのURLを取得
+        /// Constructor
         /// </summary>
-        /// <returns></returns>
-        public string GetAuthTokenUrl() => tu.GetOAuthToken(ConsumerKey, ConsumerSecret);
+        private NOauth() => session = OAuth.Authorize(ConsumerKey, ConsumerSecret);
 
+        public void OpenAuthSite() => Application.OpenURL(session.AuthorizeUri.ToString());
+
+        private Tokens tokens;
         public bool AuthorizeVerification(string pinCode, out string userId)
         {
+
+            userId = "";
             try
             {
-                // UserIDやAccessTokenを取得
-                tu.GetOAuthAccessTokenWithOAuthVerifier(
-                    pinCode,
-                    ConsumerKey,
-                    ConsumerSecret,
-                    out Token, out TokenSecret, out userId);
+                tokens = session.GetTokens(pinCode);
                 return true;
-                
             }
             catch (Exception e)
             {
                 Debug.Log(e.ToString());
-                userId = "";
                 return false;
             }
         }
+
+        /// <summary>
+        /// Twitterでのコメントのみのツイート
+        /// </summary>
+        /// <param name="message">ツイート内容</param>
+        /// <returns></returns>
+        public StatusResponse Tweet(string message) => tokens.Statuses.Update(status => message);
         
-        public void Tweet(string message)
+        /// <summary>
+        /// Twitterでの画像付きのツイート
+        /// </summary>
+        /// <param name="message">ツイート内容</param>
+        /// <param name="imgPath">添付画像(.png, .jpeg, ...)</param>
+        /// <returns></returns>
+        public StatusResponse Tweet(string message, string imgPath)
         {
-            try
-            {
-                tu.UpdateStatus(message, ConsumerKey, ConsumerSecret, Token, TokenSecret, true);
-            }
-            catch (Exception e)
-            {
-                Debug.Log(e);
-            }
-         
+            var task = tokens.Media.Upload(new {status = message, media = new FileInfo(imgPath)});
+            var id = JObject.Parse(task.Json)["media_id"];
+            return tokens.Statuses.Update(status => message, media_ids => id);
         }
+
+        
+        /// <summary>
+        /// アイコンの取得
+        /// </summary>
+        /// <param name="userId">TwitterのユーザID</param>
+        /// <returns></returns>
         public static async Task<TwitterObj> GetIcon(long userId)
         {
             // Curl でアイコンのURLを取得
