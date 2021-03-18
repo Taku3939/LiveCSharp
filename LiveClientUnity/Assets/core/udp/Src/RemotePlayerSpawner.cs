@@ -23,9 +23,9 @@ namespace StreamServer
                 {
                     remotePlayerPrefab.GetComponent<RemoteTransformRegister>().userId = packet.PaketId;
                     var go = Instantiate(remotePlayerPrefab,
-                        new Vector3(packet.Position.X, packet.Position.Y, packet.Position.Z),
-                        new Quaternion(packet.NeckRotation.X, packet.NeckRotation.Y, packet.NeckRotation.Z,
-                            packet.NeckRotation.W));
+                        new Vector3(packet.Position.x, packet.Position.y, packet.Position.z),
+                        new Quaternion(packet.NeckRotation.x, packet.NeckRotation.y, packet.NeckRotation.z,
+                            packet.NeckRotation.w));
                     go.GetComponent<ChangeCharacterData>().ChangeIcon(packet.PaketId);
                     _remotePlayers.Add(go);
                 }

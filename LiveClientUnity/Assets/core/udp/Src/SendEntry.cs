@@ -4,9 +4,6 @@ using System.Threading.Tasks;
 using StreamServer;
 using StreamServer.Model;
 using UnityEngine;
-using UnityEngine.Serialization;
-using Vector3 = StreamServer.Model.Vector3;
-using Vector4 = StreamServer.Model.Vector4;
 
 public class SendEntry : MonoBehaviour
 {
@@ -36,20 +33,26 @@ public class SendEntry : MonoBehaviour
         udpSocketHolder.TryClose();
     }
 
+   public Position _position;
     private async Task Update()
     {
         await delay;
-        var position = transform.localPosition;
-        var rotation = transform.rotation;
+        //var position = transform.localPosition;
+        //var rotation = transform.rotation;
         var buff = Utility.PacketsToBuffer(new List<MinimumAvatarPacket>{new MinimumAvatarPacket(
             _dataHolder.selfId,
-            new Vector3(position.x, position.y, position.z),
-            rotation.eulerAngles.y,
-            new Vector4(
-                rotation.x,
-                rotation.y,
-                rotation.z,
-                rotation.w))});
+            _position.GetPosition(this.transform.localPosition),
+            _position.GetRadY(),
+            new Vector4(0, 0, 0, 0))});
+        
+        // PacketUtil.ConvertFloat(buff[beginOffset], 1); 
+        // //var buf = Utility.BufferToPackets(buff);
+        // // foreach (var b in buf)
+        // // {
+        // //     Debug.Log(b.Position.x);
+        // //     Debug.Log(b.Position.y);
+        // //     Debug.Log(b.Position.z);
+        // // }
         output.Send(buff);
     }
 }

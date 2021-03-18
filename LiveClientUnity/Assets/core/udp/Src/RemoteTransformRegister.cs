@@ -12,6 +12,10 @@ namespace StreamServer
         public long userId; 
         [SerializeField] private DataHolder dataHolder;
         private Queue<Tuple<Vector3, Quaternion>> _queue = new Queue<Tuple<Vector3, Quaternion>>();
+        
+        private Vector3 vec = new Vector3(0, 0, 0);
+        private Quaternion q = Quaternion.identity;
+        private float t = 0f;
         private void Update()
         {
             dataHolder.Users.TryGetValue(userId, out var user);
@@ -19,28 +23,26 @@ namespace StreamServer
             var packet = user?.CurrentPacket;
             if (packet != null)
             {
+                Debug.Log($"x : {packet.Position.x}, y : {packet.Position.y}, z : {packet.Position.z}");
                 var pos = new Vector3(
-                    packet.Position.X,
-                    packet.Position.Y,
-                    packet.Position.Z);
+                    packet.Position.x,
+                    packet.Position.y,
+                    packet.Position.z);
                 var rot = new Quaternion(
-                    packet.NeckRotation.X,
-                    packet.NeckRotation.Y,
-                    packet.NeckRotation.Z,
-                    packet.NeckRotation.W);
-                    
-                _queue.Enqueue(new Tuple<Vector3, Quaternion>(pos, rot));
+                    packet.NeckRotation.x,
+                    packet.NeckRotation.y,
+                    packet.NeckRotation.z,
+                    packet.NeckRotation.w);
+
+                this.transform.position = pos;
+               // this.transform.rotation = rot;
+                // vec = pos;
+                // q = rot;
             }
             
-            while (_queue.Count > 1)
-            {
-                var buf = _queue.Dequeue();
-                var buf2 = _queue.Dequeue();
-             //   var pos = Mathf.Lerp(buf, buf2,);
-                this.transform.position = buf.Item1;
-                this.transform.rotation = buf.Item2;
-               
-            }
+            // t += Time.deltaTime;
+            // this.transform.position = Vector3.Lerp(this.transform.position, vec, Mathf.Clamp(t, 0f, 1f));
+            // this.transform.rotation = Quaternion.Lerp(this.transform.rotation, q, Mathf.Clamp(t, 0f, 1f));
         }
     }
 }
