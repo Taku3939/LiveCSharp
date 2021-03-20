@@ -88,8 +88,8 @@ namespace StreamServer
                                 //user.CurrentPacket = packet = null;
                                 user.IsConnected = false;
                                 _dataHolder.Users.TryRemove(kvp.Key, out var dummy);
-                                if(packet.PaketId != _dataHolder.selfId)
-                                    _playerSpawner.Remove(user.UserId);
+                                // if(packet.PaketId != _dataHolder.selfId)
+                                //     _playerSpawner.Remove(user.UserId);
                             }
                         }
                     }

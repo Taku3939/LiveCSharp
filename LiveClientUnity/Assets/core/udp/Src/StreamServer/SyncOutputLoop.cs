@@ -8,12 +8,12 @@ namespace StreamServer
     public class SyncOutputLoop
     {
         private UdpClient udp;
-        private long _logName;
+        private ulong _logName;
         private UdpSocketHolder _udpSocketHolder;
 
         public List<Transform> TransformList = new List<Transform>();
 
-        public SyncOutputLoop(UdpClient udpClient, UdpSocketHolder udpSocketHolder ,long logName)
+        public SyncOutputLoop(UdpClient udpClient, UdpSocketHolder udpSocketHolder ,ulong logName)
         {
             udp = udpClient;
             _udpSocketHolder = udpSocketHolder;

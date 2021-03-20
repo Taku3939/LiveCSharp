@@ -28,12 +28,12 @@ namespace Auth.Twitter
                 var id = JObject.Parse(task.Json)["media_id"];
                 tokens.Statuses.Update(status => text, media_ids => id);
 
-                var icon = await GetIcon(tokens.UserId);
+                var icon = await GetIcon((ulong)tokens.UserId);
             });
             Application.OpenURL(session.AuthorizeUri.ToString());
         }
         
-        public static async Task<TwitterObj> GetIcon(long userId)
+        public static async Task<TwitterObj> GetIcon(ulong userId)
         {
             // Curl でアイコンのURLを取得
             JToken profile_image_url_https;
