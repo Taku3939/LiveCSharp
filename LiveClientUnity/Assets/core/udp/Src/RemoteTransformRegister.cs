@@ -1,48 +1,71 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using StreamServer.Model;
+using UniRx;
 using UnityEngine;
- using UnityEngine.Serialization;
- using Vector3 = UnityEngine.Vector3;
+using Vector3 = UnityEngine.Vector3;
 
 namespace StreamServer
 {
     public class RemoteTransformRegister : MonoBehaviour
     {
-        public long userId; 
+        public ulong userId; 
         [SerializeField] private DataHolder dataHolder;
-        private Queue<Tuple<Vector3, Quaternion>> _queue = new Queue<Tuple<Vector3, Quaternion>>();
-        
-        private Vector3 vec = new Vector3(0, 0, 0);
-        private Quaternion q = Quaternion.identity;
+        private Queue<MinimumAvatarPacket> _queue = new Queue<MinimumAvatarPacket>();
+
+        private MinimumAvatarPacket start, dist;
         private float t = 0f;
+        private float interval = 1.0f;
+        private double totalTime;
+        private void Start()
+        {
+            TimeSpan timeSpan = DateTime.Now.Subtract(new DateTime(1970, 1, 1));
+            totalTime = Convert.ToDouble(timeSpan.TotalMilliseconds);
+            Observable.Interval(TimeSpan.FromSeconds(interval)).Subscribe(_ =>
+            {
+                dataHolder.Users.TryGetValue(userId, out var user);
+                var packet = user?.CurrentPacket;
+                if(packet == null) return;
+                _queue.Enqueue(packet);
+            });
+        }
+
         private void Update()
         {
-            dataHolder.Users.TryGetValue(userId, out var user);
-        
-            var packet = user?.CurrentPacket;
-            if (packet != null)
-            {
-                Debug.Log($"x : {packet.Position.x}, y : {packet.Position.y}, z : {packet.Position.z}");
-                var pos = new Vector3(
-                    packet.Position.x,
-                    packet.Position.y,
-                    packet.Position.z);
-                var rot = new Quaternion(
-                    packet.NeckRotation.x,
-                    packet.NeckRotation.y,
-                    packet.NeckRotation.z,
-                    packet.NeckRotation.w);
+            TimeSpan timeSpan = DateTime.Now.Subtract(new DateTime(1970, 1, 1));
+            totalTime = Convert.ToDouble(timeSpan.TotalMilliseconds);
 
-                this.transform.position = pos;
-               // this.transform.rotation = rot;
-                // vec = pos;
-                // q = rot;
+            if (_queue.Count > 10)
+            {
+                Debug.Log("メッセージの量が多すぎる");
+                _queue.Clear();
             }
-            
-            // t += Time.deltaTime;
-            // this.transform.position = Vector3.Lerp(this.transform.position, vec, Mathf.Clamp(t, 0f, 1f));
-            // this.transform.rotation = Quaternion.Lerp(this.transform.rotation, q, Mathf.Clamp(t, 0f, 1f));
+            while (_queue.Count != 0)
+            {
+                
+                if (dist != null && totalTime < dist.time) break;
+                start = dist;
+                dist = _queue.Dequeue();
+            }
+
+            if(start == null || dist == null) return;
+            var rate = InverseLerp(start.time, dist.time, totalTime);
+            var pos = Vector3.Lerp(start.Position, dist.Position, ThirdOrderInterpolation(rate));
+            var rot = Quaternion.Lerp(start.NeckRotation, dist.NeckRotation, rate);
+            this.transform.position = pos;
+            this.transform.rotation = rot;
+        }
+
+
+        public static float ThirdOrderInterpolation(float t) => t * t * (3 - 2 * t);
+
+        public static float CosInterpolation(float t) =>(float) (1f - Math.Cos(t * Mathf.PI)) / 2f;
+        public static float InverseLerp(double a, double b, double value)
+        {
+            if (b == a) return 0;
+            var v = (value - a) / (b - a);
+            return Mathf.Clamp01((float) v);
         }
     }
 }

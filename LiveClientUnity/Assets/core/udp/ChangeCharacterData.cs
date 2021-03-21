@@ -7,8 +7,9 @@ public class ChangeCharacterData : MonoBehaviour
     [SerializeField] private TextMesh _name;
     [SerializeField] private MeshRenderer _renderer;
     [SerializeField] private Material source;
-    public async void ChangeIcon(long id)
+    public async void ChangeIcon(ulong id)
     {
+        //if(true) return;
         var twitterObj = await NOauth.GetIcon(id);
         //Change Username
         _name.text = twitterObj.screenName;

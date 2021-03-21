@@ -845,6 +845,10 @@ PrefabInstance:
       propertyPath: m_Controller
       value: 
       objectReference: {fileID: 9100000, guid: 5edd8a59e87c1b149a22f13e078ffdbb, type: 2}
+    - target: {fileID: 571459855430332886, guid: b0abc53f919a82e4e88392958b594511, type: 3}
+      propertyPath: m_ApplyRootMotion
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 571459855462238999, guid: b0abc53f919a82e4e88392958b594511, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0

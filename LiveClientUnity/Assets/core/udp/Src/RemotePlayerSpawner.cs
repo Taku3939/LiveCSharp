@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -12,7 +13,7 @@ namespace StreamServer
     public class RemotePlayerSpawner : ScriptableObject
     {
         [SerializeField] private GameObject remotePlayerPrefab;
-        [NonSerialized] private List<GameObject> _remotePlayers = new List<GameObject>();
+        [NonSerialized] private ConcurrentDictionary<ulong, GameObject> _remotePlayers = new ConcurrentDictionary<ulong, GameObject>();
         [NonSerialized] public TaskScheduler TaskScheduler;
         public async Task Spawn(MinimumAvatarPacket packet)
         {
@@ -21,13 +22,18 @@ namespace StreamServer
             {
                 try
                 {
-                    remotePlayerPrefab.GetComponent<RemoteTransformRegister>().userId = packet.PaketId;
-                    var go = Instantiate(remotePlayerPrefab,
-                        new Vector3(packet.Position.x, packet.Position.y, packet.Position.z),
-                        new Quaternion(packet.NeckRotation.x, packet.NeckRotation.y, packet.NeckRotation.z,
-                            packet.NeckRotation.w));
-                    go.GetComponent<ChangeCharacterData>().ChangeIcon(packet.PaketId);
-                    _remotePlayers.Add(go);
+                    if (!_remotePlayers.ContainsKey(packet.PaketId))
+                    {
+                        remotePlayerPrefab.GetComponent<RemoteTransformRegister>().userId = packet.PaketId;
+                        var go = Instantiate(remotePlayerPrefab,
+                            new Vector3(packet.Position.x, packet.Position.y, packet.Position.z),
+                            new Quaternion(packet.NeckRotation.x, packet.NeckRotation.y, packet.NeckRotation.z,
+                                packet.NeckRotation.w));
+                        go.GetComponent<ChangeCharacterData>().ChangeIcon(packet.PaketId);
+                        _remotePlayers.TryAdd(packet.PaketId, go);
+                    }
+     
+                 
                 }
                 catch (Exception e)
                 {
@@ -36,16 +42,15 @@ namespace StreamServer
             }, CancellationToken.None, TaskCreationOptions.None, TaskScheduler);
         }
 
-        public async Task Remove(long userId)
+        public async Task Remove(ulong userId)
         {
             var taskFactory = new TaskFactory();
             await taskFactory.StartNew(() =>
             {
                 try
                 {
-                    var toRemove = _remotePlayers.Find(x => x.GetComponent<RemoteTransformRegister>().userId == userId);
-                    _remotePlayers.Remove(toRemove);
-                    Destroy(toRemove);
+                    _remotePlayers.TryRemove(userId, out var go);
+                    Destroy(go);
                 }
                 catch (Exception e)
                 {

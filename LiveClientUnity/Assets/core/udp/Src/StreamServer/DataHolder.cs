@@ -9,13 +9,13 @@ namespace StreamServer
     public class DataHolder : ScriptableObject
     {
         [NonSerialized]
-        public ConcurrentDictionary<long, User> Users = new ConcurrentDictionary<long, User>();
+        public ConcurrentDictionary<ulong, User> Users = new ConcurrentDictionary<ulong, User>();
 
-        public long selfId ;
+        public ulong selfId ;
         public string screenName;
         public void Initialize()
         {
-            Users = new ConcurrentDictionary<long, User>();
+            Users = new ConcurrentDictionary<ulong, User>();
         }
     }
 }

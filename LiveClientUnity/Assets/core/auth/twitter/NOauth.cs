@@ -75,7 +75,7 @@ namespace Auth.Twitter
         /// </summary>
         /// <param name="userId">TwitterのユーザID</param>
         /// <returns></returns>
-        public static async Task<TwitterObj> GetIcon(long userId)
+        public static async Task<TwitterObj> GetIcon(ulong userId)
         {
             // Curl でアイコンのURLを取得
             JToken profile_image_url_https;
@@ -100,7 +100,7 @@ namespace Auth.Twitter
         public static TwitterObj Parse(string text)
         {
             var strings = text.Split('&');
-            return new TwitterObj(strings[0], long.Parse(strings[1]), strings[2]);
+            return new TwitterObj(strings[0], ulong.Parse(strings[1]), strings[2]);
         }
     }
 }

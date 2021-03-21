@@ -42,12 +42,11 @@ namespace StreamServer
         /// </summary>
         /// <param name="value"></param>
         /// <returns></returns>
-        public static byte ConvertByte(float value, int m)
-        {
-            var v = (int) (value / m);
-            var h = v >= 0 ? 0 : 1; //符号 
-            v = Math.Abs(v) & 1111111; //And演算
-            var s = toBinary(v);
+        public static byte ConvertByte(int value)
+        { 
+            var h = value >= 0 ? 0 : 1; //符号 
+            value = Math.Abs(value) & 1111111; //And演算
+            var s = toBinary(value);
             var str = h + s.PadLeft(7, '0');
             byte buf = Convert.ToByte(str, 2);
             return buf;
@@ -58,12 +57,12 @@ namespace StreamServer
         /// </summary>
         /// <param name="buf"></param>
         /// <returns></returns>
-        public static float ConvertFloat(byte buf, int m)
+        public static int ConvertInt(byte buf)
         { 
             var body = Convert.ToString(buf, 2).PadLeft(8, '0');
             var c = int.Parse(body.First().ToString());
-            var c1 = (float) toInt(body);
-            var value = c1 * (c == 1 ? -1 : 1) * m;
+            var c1 = toInt(body);
+            var value = c1 * (c == 1 ? -1 : 1);
             return value;
         }
     }
