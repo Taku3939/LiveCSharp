@@ -18,6 +18,7 @@ namespace LiveClient
         public async Task ConnectAsync(string host, int port)
         {
             await client.ConnectAsync(host, port);
+            client.Client.SetSocketOption(SocketOptionLevel.Tcp, SocketOptionName.KeepAlive, true);
             Source = new CancellationTokenSource();
             OnConnectedSubject.OnNext(new UniRx.Unit());
         }
