@@ -79,6 +79,22 @@ namespace LiveCoreLibrary
             return b_value;
         }
 
+        /// <summary>
+        /// デコード用
+        /// </summary>
+        /// <param name="receiveBytes"></param>
+        /// <param name="type"></param>
+        /// <returns></returns>
+        public static T Decode<T>(byte[] receiveBytes)
+        {
+            int size = receiveBytes[3];
+            int valueSize = receiveBytes[4];
+            byte[] b_value = new byte[valueSize];
+            Buffer.BlockCopy(receiveBytes, size+ 5, b_value, 0, b_value.Length);
+            T value = MessagePackSerializer.Deserialize<T>(b_value);
+            return value;
+        }
+
         public static MessageType DecodeType(byte[] receiveBytes)
         {
             int size = receiveBytes[3];

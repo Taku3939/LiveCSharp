@@ -47,7 +47,15 @@ namespace LiveClient
         /// <returns></returns>
         public async Task ConnectAsync(string host, int port)
         {
+            if (IsConnected)
+            {
+                Close();
+                await Task.Delay(100);
+            }
+
             await client.ConnectAsync(host, port);
+    
+            client.Client.SetSocketOption(SocketOptionLevel.Tcp, SocketOptionName.KeepAlive, true);
             Source = new CancellationTokenSource();
             OnConnectedSubject.OnNext(new LiveCoreLibrary.Unit());
         }
@@ -66,6 +74,8 @@ namespace LiveClient
                 await Task.Delay(100);
             }
             await client.ConnectAsync(host, port);
+            client.Client.SetSocketOption(SocketOptionLevel.Tcp, SocketOptionName.KeepAlive, true);
+            Source = new CancellationTokenSource();
             OnConnectedSubject.OnNext(new LiveCoreLibrary.Unit());
         }
 
@@ -99,7 +109,7 @@ namespace LiveClient
                 Debug.Log("ClientがCloseしています");
                 return;
             }
-
+            
             var sArgs = new SocketAsyncEventArgs();
             sArgs.SetBuffer(serialize, 0, serialize.Length);
             sArgs.UserToken = serialize;
@@ -187,8 +197,9 @@ namespace LiveClient
                         if (!CheckConnected(client.Client))
                         {
                             Close();
+                            //再接続
                         }
-
+                        
                         await Task.Delay(interval);
                     }
                     catch (Exception e)

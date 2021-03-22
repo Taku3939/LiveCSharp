@@ -9,12 +9,11 @@ namespace LiveServer
 {
     class Program
     {
- 
+        private static MusicValue MusicValue = new MusicValue(double.MaxValue, int.MaxValue, PlayState.Stopped);
         private static async Task Main(string[] args)
         {
             var holder = new ConcurrentSocketHolder();
             int port = 30000;
-            Time.Start(1000);
             Server server = new Server(port, holder);
             server.AcceptLoop(100);
             server.HealthCheck(100);
@@ -22,30 +21,39 @@ namespace LiveServer
 
             //現在のミュージックの取得
             server.OnMessageReceived
-                .Where(e => (MethodType)e.Item1.methodType == MethodType.GetMusicValue)
-                .Where(e => e.Item1.type == typeof(LiveCoreLibrary.Unit))
-                .Subscribe(async e => await e.Item3.Client.SendAsync(MessageParser.Encode(Time.Value), SocketFlags.None));
+                .Where(x => (MethodType)x.Item1.methodType == MethodType.GetMusicValue)
+                .Where(x => x.Item1.type == typeof(LiveCoreLibrary.Unit))
+                .Subscribe(async x =>
+                {
+                    try { await x.Item3.Client.SendAsync(MessageParser.Encode(MusicValue), SocketFlags.None); }
+                    catch(Exception e){Console.WriteLine(e.ToString());}
+                });
+            
+            
             //MusicValueの更新
             server.OnMessageReceived
-                .Where(e => e.Item1.type == typeof(MusicValue))
-                .Where(e => (MethodType)e.Item1.methodType == MethodType.Post)
-                .Subscribe(async e =>
+                .Where(x => x.Item1.type == typeof(MusicValue))
+                .Where(x => x.Item1.methodType == MethodType.Post)
+                .Subscribe(async x =>
                 {
-                    try
-                    {
-                        var buffer = MessageParser.Decode(e.Item2, out var type); 
-                        Time.Value = MessagePackSerializer.Deserialize<MusicValue>(buffer);
-                    }
+                    try { MusicValue = MessageParser.Decode<MusicValue>(x.Item2); }
                     catch (Exception exception) { Console.WriteLine(exception.ToString());}
                 });
             
             //メッセージの一括送信
             server.OnMessageReceived
-                .Where(e => (MethodType)e.Item1.methodType == MethodType.Post)
-                .Subscribe(async e =>
+                .Where(x => (MethodType)x.Item1.methodType == MethodType.Post)
+                .Subscribe(async x =>
                 {
-                    foreach (var client in holder.GetClients())
-                        await client.Client.SendAsync(e.Item2, SocketFlags.None);
+                    try
+                    {
+                        foreach (var client in holder.GetClients())
+                            await client.Client.SendAsync(x.Item2, SocketFlags.None);
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine(e.ToString());
+                    }
                 });
             
             while (true)

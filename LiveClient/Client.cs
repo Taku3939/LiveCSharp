@@ -15,7 +15,7 @@ namespace LiveClient
         private CancellationTokenSource Source;
         public Client() => client = new TcpClient();
 
-        public async Task Connect(string host, int port)
+        public async Task ConnectAsync(string host, int port)
         {
             await client.ConnectAsync(host, port);
             Source = new CancellationTokenSource();
