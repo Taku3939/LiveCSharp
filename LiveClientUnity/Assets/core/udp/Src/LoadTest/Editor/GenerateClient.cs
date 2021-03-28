@@ -1,10 +1,11 @@
 ﻿using StreamServer;
+using Udp;
 using UnityEditor;
 using UnityEngine;
 
 public class GenerateClient : MonoBehaviour
 {
-    [MenuItem("Hoge/GenerateSetting")]
+    [MenuItem("Udp/GenerateSetting")]
     public static void GenerateSetting()
     {
         for (int i = 0; i < 10; ++i)
@@ -19,7 +20,7 @@ public class GenerateClient : MonoBehaviour
         }
     }
     
-    [MenuItem("Hoge/GenerateClient")]
+    [MenuItem("Udp/GenerateClient")]
     public static void GenerateInstance()
     {
         for (int i = 0; i < 10; ++i)

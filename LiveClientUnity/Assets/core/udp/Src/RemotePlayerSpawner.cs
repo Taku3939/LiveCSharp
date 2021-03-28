@@ -1,16 +1,16 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using StreamServer;
 using StreamServer.Model;
 using UnityEngine;
 using Vector3 = UnityEngine.Vector3;
 
-namespace StreamServer
+namespace Udp
 {
     [CreateAssetMenu]
-    public class RemotePlayerSpawner : ScriptableObject
+    public class RemotePlayerSpawner : ScriptableObject, IPlayerSpawner
     {
         [SerializeField] private GameObject remotePlayerPrefab;
         [NonSerialized] private ConcurrentDictionary<ulong, GameObject> _remotePlayers = new ConcurrentDictionary<ulong, GameObject>();

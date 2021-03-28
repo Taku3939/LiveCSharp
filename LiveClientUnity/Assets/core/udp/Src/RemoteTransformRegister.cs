@@ -6,22 +6,21 @@ using UniRx;
 using UnityEngine;
 using Vector3 = UnityEngine.Vector3;
 
-namespace StreamServer
+namespace Udp
 {
     public class RemoteTransformRegister : MonoBehaviour
     {
         public ulong userId; 
         [SerializeField] private DataHolder dataHolder;
-        private Queue<MinimumAvatarPacket> _queue = new Queue<MinimumAvatarPacket>();
+        private readonly Queue<MinimumAvatarPacket> _queue = new Queue<MinimumAvatarPacket>();
 
-        private MinimumAvatarPacket start, dist;
-        private float t = 0f;
+        private MinimumAvatarPacket _start, _dist;
         private float interval = 1.0f;
-        private double totalTime;
+        private double _totalTime;
         private void Start()
         {
             TimeSpan timeSpan = DateTime.Now.Subtract(new DateTime(1970, 1, 1));
-            totalTime = Convert.ToDouble(timeSpan.TotalMilliseconds);
+            _totalTime = Convert.ToDouble(timeSpan.TotalMilliseconds);
             Observable.Interval(TimeSpan.FromSeconds(interval)).Subscribe(_ =>
             {
                 dataHolder.Users.TryGetValue(userId, out var user);
@@ -34,7 +33,7 @@ namespace StreamServer
         private void Update()
         {
             TimeSpan timeSpan = DateTime.Now.Subtract(new DateTime(1970, 1, 1));
-            totalTime = Convert.ToDouble(timeSpan.TotalMilliseconds);
+            _totalTime = Convert.ToDouble(timeSpan.TotalMilliseconds);
 
             if (_queue.Count > 10)
             {
@@ -44,15 +43,15 @@ namespace StreamServer
             while (_queue.Count != 0)
             {
                 
-                if (dist != null && totalTime < dist.time) break;
-                start = dist;
-                dist = _queue.Dequeue();
+                if (_dist != null && _totalTime < _dist.Time) break;
+                _start = _dist;
+                _dist = _queue.Dequeue();
             }
 
-            if(start == null || dist == null) return;
-            var rate = InverseLerp(start.time, dist.time, totalTime);
-            var pos = Vector3.Lerp(start.Position, dist.Position, ThirdOrderInterpolation(rate));
-            var rot = Quaternion.Lerp(start.NeckRotation, dist.NeckRotation, rate);
+            if(_start == null || _dist == null) return;
+            var rate = InverseLerp(_start.Time, _dist.Time, _totalTime);
+            var pos = Vector3.Lerp(_start.Position, _dist.Position, ThirdOrderInterpolation(rate));
+            var rot = Quaternion.Lerp(_start.NeckRotation, _dist.NeckRotation, rate);
             this.transform.position = pos;
             this.transform.rotation = rot;
         }

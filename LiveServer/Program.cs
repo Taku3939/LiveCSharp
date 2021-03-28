@@ -1,9 +1,7 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Net.Sockets;
 using System.Threading.Tasks;
 using LiveCoreLibrary;
-using MessagePack;
 using UniRx;
 
 namespace LiveServer
@@ -11,6 +9,7 @@ namespace LiveServer
     class Program
     {
         private static MusicValue MusicValue = new MusicValue(0);
+
         private static async Task Main(string[] args)
         {
             var holder = new ConcurrentSocketHolder();
@@ -31,10 +30,13 @@ namespace LiveServer
                         await x.Item3.Client.SendAsync(MessageParser.Encode(MusicValue), SocketFlags.None);
                         Console.WriteLine("send" + MusicValue.StartTimeCode);
                     }
-                    catch(Exception e){Console.WriteLine(e.ToString());}
+                    catch (Exception e)
+                    {
+                        Console.WriteLine(e.ToString());
+                    }
                 });
-            
-            
+
+
             //MusicValueの更新
             server.OnMessageReceived
                 .Where(x => x.Item1.type == typeof(MusicValue))
@@ -46,12 +48,15 @@ namespace LiveServer
                         MusicValue = MessageParser.Decode<MusicValue>(x.Item2);
                         Console.WriteLine("Set StarTime : " + MusicValue.StartTimeCode);
                     }
-                    catch (Exception exception) { Console.WriteLine(exception.ToString());}
+                    catch (Exception exception)
+                    {
+                        Console.WriteLine(exception.ToString());
+                    }
                 });
-            
+
             //メッセージの一括送信
             server.OnMessageReceived
-                .Where(x => (MethodType)x.Item1.methodType == MethodType.Post)
+                .Where(x => (MethodType) x.Item1.methodType == MethodType.Post)
                 .Subscribe(async x =>
                 {
                     try
@@ -64,13 +69,12 @@ namespace LiveServer
                         Console.WriteLine(e.ToString());
                     }
                 });
-            
+
             while (true)
             {
                 var line = Console.ReadLine();
                 if (line == "quit")
                 {
-                    //Time.Stop();
                     server.Close();
                     return;
                 }

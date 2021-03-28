@@ -3,6 +3,7 @@ using System.Net;
 using System.Threading.Tasks;
 using LiveClient;
 using StreamServer;
+using Udp;
 using UniRx;
 using UnityEngine;
 using UnityEngine.Serialization;
@@ -32,12 +33,10 @@ namespace UI.Presenter
             _client = VLLNetwork.Client;
             ConnectButton.onClick.AddListener(async() =>
             {
-                _socketHolder.RemoteEndPoint = new IPEndPoint(ipSettingField.GetUdpIp(), ipSettingField.GetUdpPort());
-                _dataHolder.selfId = _dataHolder.selfId;
+                _socketHolder.SetIPEndPoint(new IPEndPoint(ipSettingField.GetUdpIp(), ipSettingField.GetUdpPort())); ;
                 await _client.ConnectAsync(ipSettingField.GetTcpIp(), ipSettingField.GetTcpPort());
                 _client.ReceiveStart(100);
                 _client.HealthCheck(1000);
-              
             });
             
             //Add connected event
@@ -49,7 +48,7 @@ namespace UI.Presenter
         {
             await Task.Delay(100);
             
-            StatusText.text = $"IsConnected : {this._client != null && this._client.IsConnected}";
+            StatusText.text = $"IsConnected : {(this._client != null && this._client.IsConnected).ToString()}";
         }
 
         private void OnConnectedEventHandler()
