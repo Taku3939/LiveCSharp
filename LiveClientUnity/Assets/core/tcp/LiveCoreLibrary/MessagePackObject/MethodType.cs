@@ -4,6 +4,6 @@ namespace LiveCoreLibrary
 {
     public enum MethodType
     {
-        Post, GetMusicValue,
+        Post, Get,
     }
 }

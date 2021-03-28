@@ -179,6 +179,7 @@ namespace LiveServer
                                     if (client.Connected && MessageParser.CheckProtocol(buffer))
                                     {
                                         var type = MessageParser.DecodeType(buffer);
+                                        Console.WriteLine("MessageReceived : " + type.type);
                                         onMessageReceivedSubject.OnNext(
                                                  new UniRx.Tuple<MessageType, byte[], TcpClient>(type, buffer, client));
                                     }

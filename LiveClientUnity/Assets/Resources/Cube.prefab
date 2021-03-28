@@ -60,7 +60,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 10303, guid: 0000000000000000f000000000000000, type: 0}
+  - {fileID: 2100000, guid: 36088eb0e5a5dbd409a674a5fdb50e70, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -258,7 +258,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 10303, guid: 0000000000000000f000000000000000, type: 0}
+  - {fileID: 2100000, guid: 36088eb0e5a5dbd409a674a5fdb50e70, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -307,6 +307,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   udpSocketHolder: {fileID: 11400000, guid: e4e3ce7bc214a704ca16ba2519e3c09b, type: 2}
   _dataHolder: {fileID: 11400000, guid: 079614da64568244abbcfff29e8080b9, type: 2}
+  target: {fileID: 4740314649636060599}
+  origin: {fileID: 0}
 --- !u!114 &4740314649636060592
 MonoBehaviour:
   m_ObjectHideFlags: 0

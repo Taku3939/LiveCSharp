@@ -33,18 +33,20 @@ namespace LiveCoreLibrary
         }
 
 
-        public static byte[] EncodeGet(MethodType type)
+        public static byte[] EncodeCustom<T>(MethodType type, T t)
         {
-            var _type = new MessageType( type, typeof(LiveCoreLibrary.Unit));
+            var _type = new MessageType(type, typeof(T));
             var b_type = MessagePackSerializer.Serialize(_type);
-            var b_value = MessagePackSerializer.Serialize(new LiveCoreLibrary.Unit());
+            var b_value = MessagePackSerializer.Serialize<T>(t);
             byte[] protocol = new byte[3] {(byte) 'V', (byte) 'L', (byte) 'L'};
-            byte[] size = new byte[1] {(byte) b_type.Length};
-            byte[] dist = new byte[5+ b_type.Length + b_value.Length];
+            byte[] typeSize = new byte[1] {(byte) b_type.Length};
+            byte[] valueSize = new byte[1] {(byte) b_value.Length};
+            byte[] dist = new byte[5 + b_type.Length + b_value.Length];
             int len = 0;
             Buffer.BlockCopy(protocol, 0, dist, len, protocol.Length);
-            Buffer.BlockCopy(size, 0, dist, len += protocol.Length, size.Length);
-            Buffer.BlockCopy(b_type, 0, dist, len += size.Length, b_type.Length);
+            Buffer.BlockCopy(typeSize, 0, dist, len += protocol.Length, typeSize.Length);
+            Buffer.BlockCopy(valueSize, 0, dist, len += typeSize.Length, valueSize.Length);
+            Buffer.BlockCopy(b_type, 0, dist, len += valueSize.Length, b_type.Length);
             Buffer.BlockCopy(b_value, 0, dist, len += b_type.Length, b_value.Length);
             return dist;
         }
@@ -90,7 +92,7 @@ namespace LiveCoreLibrary
             int size = receiveBytes[3];
             int valueSize = receiveBytes[4];
             byte[] b_value = new byte[valueSize];
-            Buffer.BlockCopy(receiveBytes, size+ 5, b_value, 0, b_value.Length);
+            Buffer.BlockCopy(receiveBytes, size + 5, b_value, 0, b_value.Length);
             T value = MessagePackSerializer.Deserialize<T>(b_value);
             return value;
         }
@@ -99,7 +101,7 @@ namespace LiveCoreLibrary
         {
             int size = receiveBytes[3];
             byte[] b_type = new byte[size];
-            Buffer.BlockCopy(receiveBytes, 5, b_type, 0, b_type.Length);
+            Buffer.BlockCopy(receiveBytes, 5, b_type, 0, size);
             MessageType messageType = MessagePackSerializer.Deserialize<MessageType>(b_type);
             return messageType;
         }

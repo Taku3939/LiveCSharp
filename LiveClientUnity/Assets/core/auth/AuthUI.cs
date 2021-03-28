@@ -46,7 +46,8 @@ namespace Auth
             {
                 if (oauth.AuthorizeVerification(pincodeField.text, out var id))
                 {
-                    var obj = await NOauth.GetIcon(ulong.Parse(id));
+                    var obj = await NOauth.GetIcon(id);
+                    if(obj == null) return;
                     dataHolder.selfId = obj.userId;
                     dataHolder.screenName = obj.screenName;
                     await OnSuccess();

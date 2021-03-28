@@ -9,8 +9,8 @@ public class ChangeCharacterData : MonoBehaviour
     [SerializeField] private Material source;
     public async void ChangeIcon(ulong id)
     {
-        //if(true) return;
         var twitterObj = await NOauth.GetIcon(id);
+        if (twitterObj == null) return;
         //Change Username
         _name.text = twitterObj.screenName;
         Debug.Log(twitterObj.iconPath);

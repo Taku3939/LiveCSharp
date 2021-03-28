@@ -9,7 +9,7 @@ public static class VLLNetwork
     {
         get
         {
-            if (client== null) client = new Client();
+            if (client == null || client.IsDisposed) client = new Client();
             return client;
         }
     }

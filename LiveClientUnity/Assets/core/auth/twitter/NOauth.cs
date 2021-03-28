@@ -3,6 +3,7 @@ using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
 using CoreTweet;
+using JetBrains.Annotations;
 using UnityEngine;
 using Newtonsoft.Json.Linq;
 
@@ -23,8 +24,8 @@ namespace Auth.Twitter
         private readonly OAuth.OAuthSession session;
 
         // CONSUMER 秘密鍵
-        private const string ConsumerKey = "5eNK6zHTeKwSkaRaTtEElI6iw";
-        private const string ConsumerSecret = "4BXegpxFThNyb5Yuhb4gdIu9693zgnCyMTqodW8zbbGEDYMwio";
+        private const string ConsumerKey = "iSR3pQXzNinfy6DXln5l7euzY";
+        private const string ConsumerSecret = "AZtsEvISNkQK1vslORnMdsL1PWYBidsPMPblWuzFYqJaea6pRv";
         /// <summary>
         /// Constructor
         /// </summary>
@@ -33,17 +34,17 @@ namespace Auth.Twitter
         public void OpenAuthSite() => Application.OpenURL(session.AuthorizeUri.ToString());
 
         private Tokens tokens;
-        public bool AuthorizeVerification(string pinCode, out string userId)
+        public bool AuthorizeVerification(string pinCode, out ulong userId)
         {
-
-            userId = "";
             try
             {
                 tokens = session.GetTokens(pinCode);
+                userId = (ulong) tokens.UserId;
                 return true;
             }
             catch (Exception e)
             {
+                userId = UInt64.MaxValue;
                 Debug.Log(e.ToString());
                 return false;
             }
@@ -72,9 +73,11 @@ namespace Auth.Twitter
         
         /// <summary>
         /// アイコンの取得
+        /// Warning : you must check null
         /// </summary>
         /// <param name="userId">TwitterのユーザID</param>
         /// <returns></returns>
+        [CanBeNull]
         public static async Task<TwitterObj> GetIcon(ulong userId)
         {
             // Curl でアイコンのURLを取得
@@ -85,7 +88,7 @@ namespace Auth.Twitter
             using (var request = new HttpRequestMessage(new HttpMethod("GET"), requestUrl))
             {
                 request.Headers.TryAddWithoutValidation("authorization",
-                    "Bearer AAAAAAAAAAAAAAAAAAAAAIBDGAEAAAAAw7ZeDqIhsXsAFYwaK5nq7MCl0%2FY%3DnGyxmDaaqHGaRiVJ3SwhOnuJMETF62ffPTQ8ddfZVpJ49MzY68");
+                    "Bearer AAAAAAAAAAAAAAAAAAAAAIBDGAEAAAAA3%2B3NRRFVfO6g12h2AE1L4MOgVOI%3DntT5nUHONPAZgsQURAEFPe4IcLkRzRmrvYpcJU9LXEzQqIRmqf");
                 HttpResponseMessage response = await httpClient.SendAsync(request);
                 var result = await response.Content.ReadAsStringAsync();
                 var obj = JObject.Parse(result);
@@ -93,7 +96,10 @@ namespace Auth.Twitter
                 //必要なキーだけ取り出す ["profile_image_url_https"]
                 profile_image_url_https = obj["profile_image_url_https"];
                 var screenName = obj["screen_name"];
-                return new TwitterObj(screenName.ToString(), userId, profile_image_url_https.ToString());
+                Debug.Log(screenName);
+                Debug.Log(profile_image_url_https);
+                if (screenName == null || profile_image_url_https == null) return null; 
+                return new TwitterObj(screenName.ToString(), userId, profile_image_url_https.ToString()); 
             }
         }
 

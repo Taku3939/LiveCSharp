@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Net.Sockets;
 using System.Threading.Tasks;
 using LiveCoreLibrary;
@@ -9,7 +10,7 @@ namespace LiveServer
 {
     class Program
     {
-        private static MusicValue MusicValue = new MusicValue(double.MaxValue, int.MaxValue, PlayState.Stopped);
+        private static MusicValue MusicValue = new MusicValue(0);
         private static async Task Main(string[] args)
         {
             var holder = new ConcurrentSocketHolder();
@@ -21,11 +22,15 @@ namespace LiveServer
 
             //現在のミュージックの取得
             server.OnMessageReceived
-                .Where(x => (MethodType)x.Item1.methodType == MethodType.GetMusicValue)
                 .Where(x => x.Item1.type == typeof(LiveCoreLibrary.Unit))
+                .Where(x => x.Item1.methodType == MethodType.Get)
                 .Subscribe(async x =>
                 {
-                    try { await x.Item3.Client.SendAsync(MessageParser.Encode(MusicValue), SocketFlags.None); }
+                    try
+                    {
+                        await x.Item3.Client.SendAsync(MessageParser.Encode(MusicValue), SocketFlags.None);
+                        Console.WriteLine("send" + MusicValue.StartTimeCode);
+                    }
                     catch(Exception e){Console.WriteLine(e.ToString());}
                 });
             
@@ -36,7 +41,11 @@ namespace LiveServer
                 .Where(x => x.Item1.methodType == MethodType.Post)
                 .Subscribe(async x =>
                 {
-                    try { MusicValue = MessageParser.Decode<MusicValue>(x.Item2); }
+                    try
+                    {
+                        MusicValue = MessageParser.Decode<MusicValue>(x.Item2);
+                        Console.WriteLine("Set StarTime : " + MusicValue.StartTimeCode);
+                    }
                     catch (Exception exception) { Console.WriteLine(exception.ToString());}
                 });
             

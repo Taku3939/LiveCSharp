@@ -16,8 +16,9 @@ namespace LiveClient
 {
     public class Client
     {
-        public bool IsConnected => this.client.Connected;
-        private readonly TcpClient client;
+        public bool IsDisposed => this.client == null;
+        public bool IsConnected => this.client != null && this.client.Connected;
+        private TcpClient client;
         private CancellationTokenSource Source;
         private readonly SynchronizationContext _context;
 
@@ -47,15 +48,15 @@ namespace LiveClient
         /// <returns></returns>
         public async Task ConnectAsync(string host, int port)
         {
-            if (IsConnected)
+            if (client == null || IsConnected)
             {
                 Close();
                 await Task.Delay(100);
+                client = new TcpClient();
             }
 
+            
             await client.ConnectAsync(host, port);
-    
-            client.Client.SetSocketOption(SocketOptionLevel.Tcp, SocketOptionName.KeepAlive, true);
             Source = new CancellationTokenSource();
             OnConnectedSubject.OnNext(new LiveCoreLibrary.Unit());
         }
@@ -68,13 +69,16 @@ namespace LiveClient
         /// <returns></returns>
         public async Task ConnectAsync(IPAddress host, int port)
         {
-            if (IsConnected)
+            if (client == null || IsConnected)
             {
                 Close();
                 await Task.Delay(100);
+                client = new TcpClient();
             }
+
+            if (client == null) return;
             await client.ConnectAsync(host, port);
-            client.Client.SetSocketOption(SocketOptionLevel.Tcp, SocketOptionName.KeepAlive, true);
+            //client.Client.SetSocketOption(SocketOptionLevel.Tcp, SocketOptionName.KeepAlive, true);
             Source = new CancellationTokenSource();
             OnConnectedSubject.OnNext(new LiveCoreLibrary.Unit());
         }
@@ -119,7 +123,7 @@ namespace LiveClient
         /// <summary>
         /// 受信開始
         /// </summary>
-        public void ReceiveStart()
+        public void ReceiveStart(int interval)
         {
             Task.Run(async () =>
             {
@@ -161,6 +165,8 @@ namespace LiveClient
                                     null);
                             }
                         }
+
+                        await Task.Delay(interval, Source.Token);
                     }
                     catch (MessagePackSerializationException e)
                     {
@@ -197,10 +203,9 @@ namespace LiveClient
                         if (!CheckConnected(client.Client))
                         {
                             Close();
-                            //再接続
                         }
                         
-                        await Task.Delay(interval);
+                        await Task.Delay(interval, Source.Token);
                     }
                     catch (Exception e)
                     {

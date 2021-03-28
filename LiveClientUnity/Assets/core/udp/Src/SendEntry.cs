@@ -20,6 +20,11 @@ public class SendEntry : MonoBehaviour
         try
         {
             await delay;
+            
+            //Originタグのついたゲームオブジェクトを検索
+            if(origin == null) origin = GameObject.FindWithTag("Origin").transform;
+            
+            //Udp通信の開始
             output = new SyncOutputLoop(udpSocketHolder.UdpClient, udpSocketHolder, _dataHolder.selfId);
             output.Start();
             output.TransformList.Add(transform);
@@ -56,7 +61,7 @@ public class SendEntry : MonoBehaviour
 
         output.Send(buff);
     }
-    public static Vector3 GetPosition(Vector3 pos, Vector3 origin)
+    private static Vector3 GetPosition(Vector3 pos, Vector3 origin)
     {
         var x =  Mathf.Clamp( pos.x - origin.x, -Range, Range);
         var y =  Mathf.Clamp( pos.y - origin.y, -Range, Range);

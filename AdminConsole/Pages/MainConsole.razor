@@ -1,0 +1,186 @@
+﻿@page "/counter"
+@using LiveCoreLibrary
+@using MessagePack
+@using UniRx
+
+<h1>Console</h1>
+<table style="border:none">
+    <tr>
+        <th>
+            <p>ホストネーム</p>
+        </th>
+        <td>
+            <input id="hostName" type="text" size="24" @bind="@host">
+        </td>
+    </tr>
+    <tr>
+        <th>
+            <p>ポート</p>
+        </th>
+        <td>
+            <input id="portValue" type="text" size="24" @bind="@port">
+        </td>
+    </tr>
+</table>
+<button @onclick=@Update>取得</button>
+<table>
+    <p>host: @host</p>
+    <p>port: @port</p>
+    <p>Connection Status: @client.IsConnected.ToString()</p>
+    <p>StartTimeCode : @currentTime.Year 年 @currentTime.Month 月 @currentTime.Day 日 @currentTime.Hour 時 @currentTime.Minute 分 @currentTime.Second 秒</p>
+</table>
+
+<button class="btn btn-primary" @onclick="Connect">connect server</button>
+
+<div class="container">
+    <div class="row">
+        <div class="form-group">
+            <div class="input-group date" id="year">
+                <input type="text" class="form-control" @bind=@year/>
+                <span class="input-group-append">
+                    <span class="input-group-text">
+                        <i class="fa fa-clock-o"></i>
+                    </span>
+                </span>
+                <label for="year" class="pt-2 pr-2">年</label>
+
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="form-group">
+            <div class="input-group date" id="month">
+                <input type="text" class="form-control" @bind=@month/>
+                <span class="input-group-append">
+                    <span class="input-group-text">
+                        <i class="fa fa-clock-o"></i>
+                    </span>
+                </span>
+                <label for="month" class="pt-2 pr-2">月</label>
+
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="form-group">
+            <div class="input-group date" id="day">
+                <input type="text" class="form-control" @bind=@day/>
+                <span class="input-group-append">
+                    <span class="input-group-text">
+                        <i class="fa fa-clock-o"></i>
+                    </span>
+                </span>
+                <label for="day" class="pt-2 pr-2">日</label>
+
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="form-group">
+            <div class="input-group date" id="hour">
+                <input type="text" class="form-control" @bind=@hour/>
+                <span class="input-group-append">
+                    <span class="input-group-text">
+                        <i class="fa fa-clock-o"></i>
+                    </span>
+                </span>
+                <label for="hour" class="pt-2 pr-2">時</label>
+
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="form-group">
+            <div class="input-group date" id="minute">
+                <input type="text" class="form-control" @bind=@minute/>
+                <span class="input-group-append">
+                    <span class="input-group-text">
+                        <i class="fa fa-clock-o"></i>
+                    </span>
+                </span>
+                <label for="minute" class="pt-2 pr-2">分</label>
+
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="form-group">
+            <div class="input-group date" id="seconds">
+                <input type="text" class="form-control" @bind=@seconds/>
+                <span class="input-group-append">
+                    <span class="input-group-text">
+                        <i class="fa fa-clock-o"></i>
+                    </span>
+                </span>
+                <label for="seconds" class="pt-2 pr-2">秒</label>
+
+            </div>
+        </div>
+    </div>
+</div>
+<button @onclick=@Publish>更新</button>
+
+@code {
+    private string host;
+    private string port;
+    private int year, month, day, hour, minute, seconds;
+
+    private readonly Client client;
+    private DateTime currentTime = DateTime.MaxValue;
+    private int y, h;
+
+    public MainConsole()
+    {
+        client = new Client();
+    }
+
+    /// <summary>
+    /// Request a tcp connection
+    /// </summary>
+    private async Task Connect()
+    {
+        //request a async connection
+        await client.ConnectAsync(host, int.Parse(port));
+
+        client.ReceiveStart(100);
+        client.HealthCheck(100);
+        //register event
+        client?.OnMessageReceived?
+            .Where(e => e.Item1.type == typeof(MusicValue))
+            .Subscribe(e => OnReceived(MessagePackSerializer.Deserialize<MusicValue>(e.Item2)));
+    }
+
+
+    /// <summary>
+    /// Publish new date time of live to server. DateTime calculate by unix time (1970/1/1). 
+    /// </summary>
+    private void Publish()
+    {
+        if (!client.IsConnected) return;
+        var totalTime = new DateTime(year, month, day, hour, minute, seconds).Subtract(new DateTime(1970, 1, 1)).TotalMilliseconds;
+        client.SendAsync(new MusicValue(totalTime));
+    }
+
+    /// <summary>
+    /// Call this method when it receives a message from the server
+    /// </summary>
+    private void OnReceived(MusicValue value)
+    {
+        var total = TimeSpan.FromMilliseconds(value.StartTimeCode);
+
+        currentTime = new DateTime(1970, 1, 1) + total;
+        //received status render 
+        this.StateHasChanged();
+    }
+    
+    /// <summary>
+    /// Ask the server for the current live time
+    /// </summary>
+    private void Update()
+    {
+        if (!client.IsConnected) return;
+
+        client.SendAsync(MessageParser.EncodeCustom(MethodType.Get, new LiveCoreLibrary.Unit()));
+    }
+
+}

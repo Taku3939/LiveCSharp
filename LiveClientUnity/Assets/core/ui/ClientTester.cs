@@ -10,7 +10,7 @@ public class ClientTester : MonoBehaviour
     {
         client = VLLNetwork.Client;
         await client.ConnectAsync("127.0.0.1", 30000);
-        client.ReceiveStart();
+        client.ReceiveStart(100);
         client.HealthCheck(1000);
     }
     
