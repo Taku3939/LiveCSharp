@@ -37,7 +37,10 @@ namespace LiveServer
             _sources = new List<CancellationTokenSource>();
             _listener = new TcpListener(IPAddress.Any, port);
             _listener.Start();
+#if DEBUG
             Console.WriteLine($"Listening start...:{port}");
+#endif
+          
         }
 
         /// <summary>
@@ -120,11 +123,12 @@ namespace LiveServer
                         {
                             var client = task.Result;
                             var remoteEndPoint = (IPEndPoint) client.Client.RemoteEndPoint;
+                            _holder.Add(client);
+#if DEBUG
                             Console.WriteLine($"Connected: [No name] " +
                                               $"({remoteEndPoint.Address}: {remoteEndPoint.Port})");
-
-                            _holder.Add(client);
                             Console.WriteLine("client count is " + _holder.GetClients().Count);
+#endif
                         }
 
                         await Task.Delay(interval, source.Token);
@@ -150,7 +154,6 @@ namespace LiveServer
             {
                 while (true)
                 {
-                   
                     try
                     {
                         if (source.IsCancellationRequested) return;
@@ -179,7 +182,9 @@ namespace LiveServer
                                     if (client.Connected && MessageParser.CheckProtocol(buffer))
                                     {
                                         var type = MessageParser.DecodeType(buffer);
+#if DEBUG
                                         Console.WriteLine("MessageReceived : " + type.type);
+#endif
                                         onMessageReceivedSubject.OnNext(
                                                  new UniRx.Tuple<MessageType, byte[], TcpClient>(type, buffer, client));
                                     }
@@ -194,7 +199,7 @@ namespace LiveServer
                         Console.WriteLine(e.ToString());
                     }
                 }
-            });
+            }, source.Token);
         }
 
 
