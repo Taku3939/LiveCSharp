@@ -173,11 +173,16 @@ namespace LiveServer
                                 {
                                     await using MemoryStream mStream = new MemoryStream();
                                     byte[] buffer = new byte[256];
-                                    do
+                                    try
                                     {
                                         int dataSize = await nStream.ReadAsync(buffer, 0, buffer.Length, source.Token);
                                         await mStream.WriteAsync(buffer, 0, dataSize, source.Token);
-                                    } while (nStream.DataAvailable);
+                                    }
+                                    catch (Exception e)
+                                    {
+                                        Console.WriteLine("256以下のメッセージしか処理しない : " + e.ToString());
+                                        return;
+                                    }
 
                                     if (client.Connected && MessageParser.CheckProtocol(buffer))
                                     {

@@ -98,7 +98,7 @@ namespace Test
             _testOutputHelper.WriteLine($"Send {serialize.Length.ToString()}bytes : Client -> Server");
             
             //受信までの待機
-            await Task.Delay(2000);
+            await Task.Delay(10000);
             
             //メッセージを受信できたどうかの確認
             Assert.True(flag);
