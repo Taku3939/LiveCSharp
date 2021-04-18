@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Net.Sockets;
 using System.Threading.Tasks;
 using LiveCoreLibrary;
@@ -69,6 +70,17 @@ namespace LiveServer
                         Console.WriteLine(e.ToString());
                     }
                 });
+
+            // //チャットをコンソールに表示するためのDebug用
+            // server.OnMessageReceived
+            //     .Where(x => x.Item1.methodType == MethodType.Post)
+            //     .Where(x => x.Item1.type == typeof(ChatMessage))
+            //     .Subscribe(x =>
+            //     {
+            //         Console.Write("Received : ");
+            //         ChatMessage chatMessage = MessageParser.Decode<ChatMessage>(x.Item2);
+            //         Console.WriteLine(chatMessage.message);
+            //     });
 
             while (true)
             {
