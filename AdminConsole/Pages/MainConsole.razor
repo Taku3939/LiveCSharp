@@ -147,7 +147,7 @@
         client.HealthCheck(100);
         //register event
         client?.OnMessageReceived?
-            .Where(e => e.Item1.MessageType == typeof(MusicValue))
+            .Where(e => e.Item1.MessageTypeContext == typeof(MusicValue).ToString())
             .Subscribe(e => OnReceived(MessagePackSerializer.Deserialize<MusicValue>(e.Item2)));
     }
 
