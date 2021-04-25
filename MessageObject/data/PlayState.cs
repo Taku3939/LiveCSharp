@@ -2,7 +2,7 @@
 
 using MessagePack;
 
-namespace LiveCoreLibrary
+namespace MessageObject
 {
     public enum PlayState
     {

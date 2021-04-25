@@ -1,12 +1,12 @@
 ﻿using MessagePack;
-namespace LiveCoreLibrary
+namespace MessageObject
 {
     [MessagePackObject]
     public class ChatMessage
     {
-        [Key(0)] public long id { get; }
+        [Key(0)] public ulong id { get; }
         [Key(1)] public string message { get; }
-        public ChatMessage(long id, string message)
+        public ChatMessage(ulong id, string message)
         {
             this.id = id;
             this.message = message;
