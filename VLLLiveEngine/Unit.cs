@@ -2,7 +2,7 @@
 
 using MessagePack;
 
-namespace LiveCoreLibrary
+namespace VLLLiveEngine
 {
     [MessagePackObject]
     public class Unit

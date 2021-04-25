@@ -1,7 +1,7 @@
 using System;
 using MessagePack;
 
-namespace LiveCoreLibrary
+namespace MessageObject
 {
     [Serializable]
     [MessagePackObject]

@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Net.Sockets;
 
-namespace LiveServer
+namespace VLLLiveEngine
 {
     public interface ISocketHolder
     {

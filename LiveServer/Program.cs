@@ -1,15 +1,16 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Net.Sockets;
 using System.Threading.Tasks;
-using LiveCoreLibrary;
+using MessageObject;
+using UI.Hub;
 using UniRx;
-
+using VLLLiveEngine;
 namespace LiveServer
 {
     class Program
     {
         private static MusicValue MusicValue = new MusicValue(0);
-
         private static async Task Main(string[] args)
         {
             var holder = new ConcurrentSocketHolder();
@@ -21,13 +22,13 @@ namespace LiveServer
 
             //現在のミュージックの取得
             server.OnMessageReceived
-                .Where(x => x.Item1.type == typeof(LiveCoreLibrary.Unit))
-                .Where(x => x.Item1.methodType == MethodType.Get)
+                .Where(x => x.Item1.MessageTypeContext== typeof(VLLLiveEngine.Unit).ToString())
+                .Where(x => x.Item1.Method == Method.Get)
                 .Subscribe(async x =>
                 {
                     try
                     {
-                        await x.Item3.Client.SendAsync(MessageParser.Encode(MusicValue), SocketFlags.None);
+                        await x.Item3.Client.SendAsync(MessageParser.Encode(MusicValue, typeof(SyncHub)), SocketFlags.None);
                         Console.WriteLine("send" + MusicValue.StartTimeCode);
                     }
                     catch (Exception e)
@@ -36,11 +37,11 @@ namespace LiveServer
                     }
                 });
 
-
-            //MusicValueの更新
+     
+                //MusicValueの更新
             server.OnMessageReceived
-                .Where(x => x.Item1.type == typeof(MusicValue))
-                .Where(x => x.Item1.methodType == MethodType.Post)
+                .Where(x => x.Item1.MessageTypeContext == typeof(MusicValue).ToString())
+                .Where(x => x.Item1.Method == Method.Post)
                 .Subscribe(async x =>
                 {
                     try
@@ -56,7 +57,7 @@ namespace LiveServer
 
             //メッセージの一括送信
             server.OnMessageReceived
-                .Where(x => (MethodType) x.Item1.methodType == MethodType.Post)
+                .Where(x => x.Item1.Method == Method.Post)
                 .Subscribe(async x =>
                 {
                     try
@@ -70,6 +71,17 @@ namespace LiveServer
                     }
                 });
 
+            // //チャットをコンソールに表示するためのDebug用
+            // server.OnMessageReceived
+            //     .Where(x => x.Item1.methodType == MethodType.Post)
+            //     .Where(x => x.Item1.type == typeof(ChatMessage))
+            //     .Subscribe(x =>
+            //     {
+            //         Console.Write("Received : ");
+            //         ChatMessage chatMessage = MessageParser.Decode<ChatMessage>(x.Item2);
+            //         Console.WriteLine(chatMessage.message);
+            //     });
+
             while (true)
             {
                 var line = Console.ReadLine();
@@ -82,3 +94,9 @@ namespace LiveServer
         }
     }
 }
+
+namespace UI.Hub
+{
+    public class SyncHub{}
+}
+

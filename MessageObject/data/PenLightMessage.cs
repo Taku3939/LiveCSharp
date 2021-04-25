@@ -1,16 +1,18 @@
 ﻿using MessagePack;
 
-namespace LiveCoreLibrary
+namespace MessageObject
 {
     [MessagePackObject]
     public class PenLightMessage
     {
-        [Key(0)] public PenLightMode mode { get; }
+        [Key(0)] public ulong UserId { get; }
+        [Key(1)] public PenLightMode mode { get; }
         
-        [Key(1)] public ColorRgb _colorRgb;
+        [Key(2)] public ColorRgb _colorRgb;
 
-        public PenLightMessage(PenLightMode mode, ColorRgb colorRgb)
+        public PenLightMessage(ulong userId, PenLightMode mode, ColorRgb colorRgb)
         {
+            this.UserId = userId;
             this.mode = mode;
             this._colorRgb = colorRgb;
         }
@@ -19,8 +21,7 @@ namespace LiveCoreLibrary
     public enum PenLightMode
     {
         Pen_None,
-        Pen_Normal,
-        Pen_Swing,
+        // Pen_Normal,
         Pen_Swing1,
         Pen_Swing2,
         Pen_Swing3,

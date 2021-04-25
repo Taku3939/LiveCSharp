@@ -1,7 +1,8 @@
 ﻿@page "/counter"
-@using LiveCoreLibrary
+@using MessageObject
 @using MessagePack
 @using UniRx
+@using VLLLiveEngine
 
 <h1>Console</h1>
 <table style="border:none">
@@ -146,7 +147,7 @@
         client.HealthCheck(100);
         //register event
         client?.OnMessageReceived?
-            .Where(e => e.Item1.type == typeof(MusicValue))
+            .Where(e => e.Item1.MessageTypeContext == typeof(MusicValue).ToString())
             .Subscribe(e => OnReceived(MessagePackSerializer.Deserialize<MusicValue>(e.Item2)));
     }
 
@@ -158,9 +159,11 @@
     {
         if (!client.IsConnected) return;
         var totalTime = new DateTime(year, month, day, hour, minute, seconds).Subtract(new DateTime(1970, 1, 1)).TotalMilliseconds;
-        client.SendAsync(new MusicValue(totalTime));
+        client.SendAsync(new MusicValue(totalTime), typeof(SyncHub));
     }
 
+    private class SyncHub{}
+    
     /// <summary>
     /// Call this method when it receives a message from the server
     /// </summary>
@@ -180,7 +183,7 @@
     {
         if (!client.IsConnected) return;
 
-        client.SendAsync(MessageParser.EncodeCustom(MethodType.Get, new LiveCoreLibrary.Unit()));
+        client.GetAsync(new VLLLiveEngine.Unit(),typeof(SyncHub));
     }
 
 }

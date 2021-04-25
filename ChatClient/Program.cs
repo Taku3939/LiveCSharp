@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Threading.Tasks;
-using LiveCoreLibrary;
+using MessageObject;
 using MessagePack;
 using UniRx;
-
+using VLLLiveEngine;
 namespace ChatClient
 {
     class Program
@@ -19,21 +19,23 @@ namespace ChatClient
             
             //チャットを受け取ったときのイベント登録
             client.OnMessageReceived?
-                .Where(e => e.Item1.type == typeof(ChatMessage))
+                .Where(e => e.Item1.MessageTypeContext == typeof(ChatMessage).ToString())
                 .Subscribe(e => Console.WriteLine(MessagePackSerializer.Deserialize<ChatMessage>(e.Item2).message));
             
             //受信開始
             client.ReceiveStart(100);
             Console.WriteLine("名前を入力してください...");
+
+            ChatHub chatHub = new ChatHub(client);
             var name = Console.ReadLine();
+            var id = (ulong) new Random().Next();
             while (true)
             {
                 Console.WriteLine("メッセージを入力してください...");
                 var r = Console.ReadLine();
                 if (r == "quit") break;
-                var m = new ChatMessage(new Random().Next(), $"{name} : {r}");
-                var buffer = MessageParser.Encode(m);
-                client.SendAsync(buffer);
+                var m = new ChatMessage(id, $"{name} : {r}");
+                chatHub.Send(m);
             }
 
             client.Close();

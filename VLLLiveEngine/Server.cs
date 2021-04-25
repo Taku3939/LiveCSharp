@@ -5,11 +5,9 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
-using LiveCoreLibrary;
-
 using UniRx;
 
-namespace LiveServer
+namespace VLLLiveEngine
 {
     /// <summary>
     /// Serverクラス
@@ -20,10 +18,10 @@ namespace LiveServer
         private readonly ISocketHolder _holder;
         private readonly List<CancellationTokenSource> _sources;
 
-        private readonly Subject<UniRx.Tuple<MessageType, byte[], TcpClient>> onMessageReceivedSubject =
-            new Subject<UniRx.Tuple<MessageType, byte[], TcpClient>>();
-        
-        public UniRx.IObservable<UniRx.Tuple<MessageType, byte[], TcpClient>> OnMessageReceived =>
+        private readonly Subject<UniRx.Tuple<Message, byte[], TcpClient>> onMessageReceivedSubject =
+            new Subject<UniRx.Tuple<Message, byte[], TcpClient>>();
+
+        public UniRx.IObservable<UniRx.Tuple<Message, byte[], TcpClient>> OnMessageReceived =>
             this.onMessageReceivedSubject;
 
         /// <summary>
@@ -40,7 +38,6 @@ namespace LiveServer
 #if DEBUG
             Console.WriteLine($"Listening start...:{port}");
 #endif
-          
         }
 
         /// <summary>
@@ -69,6 +66,11 @@ namespace LiveServer
                             _holder.Remove(client);
 
                         await Task.Delay(interval, source.Token);
+                        source.Token.ThrowIfCancellationRequested();
+                    }
+                    catch (OperationCanceledException exception)
+                    {
+                        Console.WriteLine("Task Canceled");
                     }
                     catch (Exception e)
                     {
@@ -132,6 +134,11 @@ namespace LiveServer
                         }
 
                         await Task.Delay(interval, source.Token);
+                        source.Token.ThrowIfCancellationRequested();
+                    }
+                    catch (OperationCanceledException exception)
+                    {
+                        Console.WriteLine("Task Canceled");
                     }
                     catch (Exception e)
                     {
@@ -160,7 +167,7 @@ namespace LiveServer
                         var clients = _holder.GetClients();
                         foreach (var client in clients)
                         {
-                            while (client.Available != 0)
+                            while (client.Available != 0 && client.Connected)
                             {
                                 NetworkStream nStream = client.GetStream();
                                 if (!nStream.CanRead)
@@ -172,32 +179,39 @@ namespace LiveServer
                                 var _ = Task.Run(async () =>
                                 {
                                     await using MemoryStream mStream = new MemoryStream();
+                                    if (!mStream.CanRead) return;
                                     byte[] buffer = new byte[256];
                                     try
                                     {
                                         int dataSize = await nStream.ReadAsync(buffer, 0, buffer.Length, source.Token);
-                                        await mStream.WriteAsync(buffer, 0, dataSize, source.Token);
+                                        if (dataSize < 5) return;
+                                        byte[] dist = new byte[dataSize];
+                                        Buffer.BlockCopy(buffer, 0, dist, 0, dataSize);
+                                        if (client.Connected && MessageParser.CheckProtocol(dist))
+                                        {
+                                            var type = MessageParser.DecodeType(dist);
+                                            Console.WriteLine("MessageReceived : " + type.MessageTypeContext);
+                                            onMessageReceivedSubject.OnNext(
+                                                new UniRx.Tuple<Message, byte[], TcpClient>(type, dist, client));
+                                        }
+                                    }
+                                    catch (OperationCanceledException e)
+                                    {
+                                        Console.WriteLine("Task Canceled");
                                     }
                                     catch (Exception e)
                                     {
-                                        Console.WriteLine("256以下のメッセージしか処理しない : " + e.ToString());
-                                        return;
-                                    }
-
-                                    if (client.Connected && MessageParser.CheckProtocol(buffer))
-                                    {
-                                        var type = MessageParser.DecodeType(buffer);
-#if DEBUG
-                                        Console.WriteLine("MessageReceived : " + type.type);
-#endif
-                                        onMessageReceivedSubject.OnNext(
-                                                 new UniRx.Tuple<MessageType, byte[], TcpClient>(type, buffer, client));
+                                        Console.WriteLine(e.ToString());
                                     }
                                 }, source.Token);
                             }
                         }
 
                         await Task.Delay(interval, source.Token);
+                    }
+                    catch (OperationCanceledException e)
+                    {
+                        Console.WriteLine("Task Canceled");
                     }
                     catch (Exception e)
                     {
