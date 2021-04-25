@@ -5,7 +5,7 @@ using MessagePack;
 namespace VLLLiveEngine
 {
     [MessagePackObject]
-    public class MessageType
+    public class Message
     {
         [Key(0)] public Method Method { get; }
         
@@ -19,21 +19,21 @@ namespace VLLLiveEngine
         /// </summary>
         [Key(2)] public string ReceiveTypeContext { get; }
         
-        [IgnoreMember]
-        public Type? MessageType => Type.GetType(MessageTypeContext);
-        
-        [IgnoreMember]
-        public Type? ReceiveType => Type.GetType(ReceiveTypeContext);
+        // [IgnoreMember]
+        // public Type? MessageType => Type.GetType(MessageTypeContext);
+        //
+        // [IgnoreMember]
+        // public Type? ReceiveType => Type.GetType(ReceiveTypeContext);
 
        
-        public MessageType(Method method, Type senderType, Type sourceType)
+        public Message(Method method, Type messageType, Type sourceType)
         {
             this.Method = method;
-            this.MessageTypeContext = senderType.ToString();
+            this.MessageTypeContext = messageType.ToString();
             this.ReceiveTypeContext = sourceType.ToString();
         }
         
-        public MessageType(Method method, string messageTypeContext, string receiveTypeContext)
+        public Message(Method method, string messageTypeContext, string receiveTypeContext)
         {
             this.Method = method;
             this.MessageTypeContext = messageTypeContext;

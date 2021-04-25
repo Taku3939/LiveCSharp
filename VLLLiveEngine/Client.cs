@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 using MessagePack;
 using UniRx;
 
-namespace LiveCoreLibrary
+namespace VLLLiveEngine
 {
      public class Client
     {
@@ -18,14 +18,14 @@ namespace LiveCoreLibrary
         private CancellationTokenSource _source;
         private SynchronizationContext _context;
 
-        private readonly Subject<UniRx.Tuple<MessageType, byte[]>> _onMessageReceivedSubject =
-            new Subject<UniRx.Tuple<MessageType, byte[]>>();
+        private readonly Subject<UniRx.Tuple<Message, byte[]>> _onMessageReceivedSubject =
+            new Subject<UniRx.Tuple<Message, byte[]>>();
 
-        private readonly Subject<LiveCoreLibrary.Unit> onConnectedSubject = new Subject<Unit>();
-        private readonly Subject<LiveCoreLibrary.Unit> onDisconnectedSubject = new Subject<Unit>();
-        public UniRx.IObservable<UniRx.Tuple<MessageType, byte[]>> OnMessageReceived => this._onMessageReceivedSubject;
-        public UniRx.IObservable<LiveCoreLibrary.Unit> OnConnected => this.onConnectedSubject;
-        public UniRx.IObservable<LiveCoreLibrary.Unit> OnDisconnected => this.onDisconnectedSubject;
+        private readonly Subject<Unit> onConnectedSubject = new Subject<Unit>();
+        private readonly Subject<Unit> onDisconnectedSubject = new Subject<Unit>();
+        public UniRx.IObservable<UniRx.Tuple<Message, byte[]>> OnMessageReceived => this._onMessageReceivedSubject;
+        public UniRx.IObservable<Unit> OnConnected => this.onConnectedSubject;
+        public UniRx.IObservable<Unit> OnDisconnected => this.onDisconnectedSubject;
 
 
         public Client()
@@ -53,7 +53,7 @@ namespace LiveCoreLibrary
 
             await _client.ConnectAsync(host, port);
             _source = new CancellationTokenSource();
-            onConnectedSubject.OnNext(new LiveCoreLibrary.Unit());
+            onConnectedSubject.OnNext(new Unit());
         }
  
         /// <summary>
@@ -77,7 +77,7 @@ namespace LiveCoreLibrary
             await _client.ConnectAsync(host, port);
             //client.Client.SetSocketOption(SocketOptionLevel.Tcp, SocketOptionName.KeepAlive, true);
             _source = new CancellationTokenSource();
-            onConnectedSubject.OnNext(new LiveCoreLibrary.Unit());
+            onConnectedSubject.OnNext(new Unit());
         }
 
         /// <summary>
@@ -114,7 +114,7 @@ namespace LiveCoreLibrary
                 return;
             }
 
-            var serialize = MessageParser.EncodeCustom(MethodType.Get, t, source);
+            var serialize = MessageParser.EncodeCustom(Method.Get, t, source);
             var sArgs = new SocketAsyncEventArgs();
             sArgs.SetBuffer(serialize, 0, serialize.Length);
             sArgs.UserToken = serialize;
@@ -169,7 +169,7 @@ namespace LiveCoreLibrary
                                 Console.WriteLine("メッセージを受信しました");
                                 var body = MessageParser.Decode(receiveBytes, out var type);
                                 _context.Post(
-                                    _ => _onMessageReceivedSubject.OnNext(new UniRx.Tuple<MessageType, byte[]>(type, body)),
+                                    _ => _onMessageReceivedSubject.OnNext(new UniRx.Tuple<Message, byte[]>(type, body)),
                                     null);
                             }
                         }

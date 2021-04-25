@@ -19,5 +19,7 @@
             <PrivateAssets>all</PrivateAssets>
         </PackageReference>
         <ProjectReference Include="..\LiveServer\LiveServer.csproj" />
+        <ProjectReference Include="..\VLLLiveEngine\VLLLiveEngine.csproj" />
+        <ProjectReference Include="..\MessageObject\MessageObject.csproj" />
     </ItemGroup>
 </Project>

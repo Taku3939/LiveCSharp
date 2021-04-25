@@ -5,10 +5,9 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
-using LiveCoreLibrary;
 using UniRx;
 
-namespace LiveServer
+namespace VLLLiveEngine
 {
     /// <summary>
     /// Serverクラス
@@ -19,10 +18,10 @@ namespace LiveServer
         private readonly ISocketHolder _holder;
         private readonly List<CancellationTokenSource> _sources;
 
-        private readonly Subject<UniRx.Tuple<MessageType, byte[], TcpClient>> onMessageReceivedSubject =
-            new Subject<UniRx.Tuple<MessageType, byte[], TcpClient>>();
+        private readonly Subject<UniRx.Tuple<Message, byte[], TcpClient>> onMessageReceivedSubject =
+            new Subject<UniRx.Tuple<Message, byte[], TcpClient>>();
 
-        public UniRx.IObservable<UniRx.Tuple<MessageType, byte[], TcpClient>> OnMessageReceived =>
+        public UniRx.IObservable<UniRx.Tuple<Message, byte[], TcpClient>> OnMessageReceived =>
             this.onMessageReceivedSubject;
 
         /// <summary>
@@ -191,9 +190,9 @@ namespace LiveServer
                                         if (client.Connected && MessageParser.CheckProtocol(dist))
                                         {
                                             var type = MessageParser.DecodeType(dist);
-                                            Console.WriteLine("MessageReceived : " + type.type);
+                                            Console.WriteLine("MessageReceived : " + type.MessageTypeContext);
                                             onMessageReceivedSubject.OnNext(
-                                                new UniRx.Tuple<MessageType, byte[], TcpClient>(type, dist, client));
+                                                new UniRx.Tuple<Message, byte[], TcpClient>(type, dist, client));
                                         }
                                     }
                                     catch (OperationCanceledException e)

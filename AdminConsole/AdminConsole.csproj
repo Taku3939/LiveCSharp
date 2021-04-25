@@ -5,7 +5,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\LiveCoreLibrary\LiveCoreLibrary.csproj" />
+      <ProjectReference Include="..\MessageObject\MessageObject.csproj" />
+      <ProjectReference Include="..\VLLLiveEngine\VLLLiveEngine.csproj" />
     </ItemGroup>
 
     <ItemGroup>

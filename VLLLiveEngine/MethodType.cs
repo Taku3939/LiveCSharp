@@ -1,10 +1,6 @@
-﻿// Created by Takuya Isaki on 2021/03/03
-
-using MessagePack;
-
-namespace LiveCoreLibrary
+﻿namespace VLLLiveEngine
 {
-    public enum MethodType
+    public enum Method
     {
         Post, Get,
     }

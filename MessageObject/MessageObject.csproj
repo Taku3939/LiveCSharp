@@ -4,7 +4,7 @@
         <TargetFramework>netcoreapp3.1</TargetFramework>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <Nullable>enable</Nullable>
-        <RootNamespace>LiveCoreLibrary</RootNamespace>
+        <RootNamespace>MessageObject</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>
