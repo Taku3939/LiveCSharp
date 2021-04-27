@@ -1,4 +1,6 @@
-﻿using MessagePack;
+﻿// Created by Takuya Isaki on $DATE$.
+
+using MessagePack;
 
 namespace LiveCoreLibrary
 {
@@ -8,11 +10,13 @@ namespace LiveCoreLibrary
     [MessagePackObject]
     public class EmoteMessage
     {
-        [Key(0)] public int key { get; }
+        [Key(0)] public ulong UserId { get; }
+        [Key(1)] public int Key { get; }
 
-        public EmoteMessage(int key)
+        public EmoteMessage(ulong userId, int key)
         {
-            this.key = key;
+            this.UserId = userId;
+            this.Key = key;
         }
     }
 }

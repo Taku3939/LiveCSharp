@@ -4,12 +4,16 @@ namespace LiveCoreLibrary
     [MessagePackObject]
     public class ChatMessage
     {
-        [Key(0)] public long id { get; }
-        [Key(1)] public string message { get; }
-        public ChatMessage(long id, string message)
+        
+        [Key(0)]
+        public ulong UserId { get; }
+        [Key(1)]
+        public string Message { get; }
+        
+        public ChatMessage(ulong userId, string message)
         {
-            this.id = id;
-            this.message = message;
+            this.UserId = userId;
+            this.Message = message;
         }
     }
 }

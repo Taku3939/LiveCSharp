@@ -20,7 +20,7 @@ namespace ChatClient
             //チャットを受け取ったときのイベント登録
             client.OnMessageReceived?
                 .Where(e => e.Item1.type == typeof(ChatMessage))
-                .Subscribe(e => Console.WriteLine(MessagePackSerializer.Deserialize<ChatMessage>(e.Item2).message));
+                .Subscribe(e => Console.WriteLine(MessagePackSerializer.Deserialize<ChatMessage>(e.Item2).Message));
             
             //受信開始
             client.ReceiveStart(100);
@@ -31,7 +31,7 @@ namespace ChatClient
                 Console.WriteLine("メッセージを入力してください...");
                 var r = Console.ReadLine();
                 if (r == "quit") break;
-                var m = new ChatMessage(new Random().Next(), $"{name} : {r}");
+                var m = new ChatMessage((ulong)new Random().Next(), $"{name} : {r}");
                 var buffer = MessageParser.Encode(m);
                 client.SendAsync(buffer);
             }

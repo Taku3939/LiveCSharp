@@ -3,7 +3,6 @@ using MessagePack;
 
 namespace LiveCoreLibrary
 {
-    [Serializable]
     [MessagePackObject]
     public class MusicValue
     {

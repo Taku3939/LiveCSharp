@@ -171,6 +171,8 @@
         currentTime = new DateTime(1970, 1, 1) + total;
         //received status render 
         this.StateHasChanged();
+        client.Close();
+        this.StateHasChanged();
     }
     
     /// <summary>
