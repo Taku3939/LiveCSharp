@@ -9,7 +9,7 @@ namespace LiveServer
 {
     class Program
     {
-        private static MusicValue MusicValue = new MusicValue(0);
+        private static MusicValue MusicValue = new MusicValue(-1, -1);
 
         private static async Task Main(string[] args)
         {
@@ -47,7 +47,7 @@ namespace LiveServer
                     try
                     {
                         MusicValue = MessageParser.Decode<MusicValue>(x.Item2);
-                        Console.WriteLine("Set StarTime : " + MusicValue.StartTimeCode);
+                        Console.WriteLine($"Set StarTime : { MusicValue.StartTimeCode }, Now Time : {MusicValue.CurrentTime}");
                     }
                     catch (Exception exception)
                     {

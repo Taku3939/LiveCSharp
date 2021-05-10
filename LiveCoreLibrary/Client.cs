@@ -50,8 +50,6 @@ namespace LiveCoreLibrary
                 await Task.Delay(100);
                 client = new TcpClient();
             }
-
-            
             await client.ConnectAsync(host, port);
             Source = new CancellationTokenSource();
             OnConnectedSubject.OnNext(new UniRx.Unit());
@@ -71,10 +69,7 @@ namespace LiveCoreLibrary
                 await Task.Delay(100);
                 client = new TcpClient();
             }
-
-            if (client == null) return;
             await client.ConnectAsync(host, port);
-            //client.Client.SetSocketOption(SocketOptionLevel.Tcp, SocketOptionName.KeepAlive, true);
             Source = new CancellationTokenSource();
             OnConnectedSubject.OnNext(new UniRx.Unit());
         }

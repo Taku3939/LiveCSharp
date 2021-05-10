@@ -2,6 +2,7 @@
 @using LiveCoreLibrary
 @using MessagePack
 @using UniRx
+@using System.Net
 
 <h1>Console</h1>
 <table style="border:none">
@@ -139,9 +140,7 @@
     /// </summary>
     private async Task Connect()
     {
-        //request a async connection
         await client.ConnectAsync(host, int.Parse(port));
-
         client.ReceiveStart(100);
         client.HealthCheck(100);
         //register event
@@ -157,8 +156,9 @@
     private void Publish()
     {
         if (!client.IsConnected) return;
+        var currentTime = DateTime.Now.Subtract(new DateTime(1970, 1, 1)).TotalMilliseconds;
         var totalTime = new DateTime(year, month, day, hour, minute, seconds).Subtract(new DateTime(1970, 1, 1)).TotalMilliseconds;
-        client.SendAsync(new MusicValue(totalTime));
+        client.SendAsync(new MusicValue(totalTime, currentTime));
     }
 
     /// <summary>

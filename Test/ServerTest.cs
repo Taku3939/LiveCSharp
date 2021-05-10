@@ -23,7 +23,7 @@ namespace Test
         [Fact]
         public async Task ServerTest01()
         {
-            double TimeCode = 2000;
+            double TimeCode = 2000, TimeCode2 = 2400;
 
             #region Server Side
             
@@ -47,7 +47,7 @@ namespace Test
                         _testOutputHelper.WriteLine($"Received {x.Item2.Length.ToString()}bytes: Client -> Server");
                         var value = MessageParser.Decode<MusicValue>(x.Item2);
                         Assert.Equal(value.StartTimeCode, TimeCode);
-
+                        Assert.Equal(value.CurrentTime, TimeCode2);
                         //全てのクライアントへの送信
                         foreach (var c in holder.GetClients())
                             await c.Client.SendAsync(x.Item2, SocketFlags.None);
@@ -82,6 +82,7 @@ namespace Test
                     _testOutputHelper.WriteLine($"Received {e.Item2.Length.ToString()}bytes : Server -> Client");
                     var value = MessagePackSerializer.Deserialize<MusicValue>(e.Item2);
                     Assert.Equal(value.StartTimeCode, TimeCode);
+                    Assert.Equal(value.CurrentTime, TimeCode2);
                     flag = true;
                 });
             
@@ -92,7 +93,7 @@ namespace Test
             client.ReceiveStart(1000);
             
             //メッセージの送信
-            MusicValue musicValue = new MusicValue(TimeCode);
+            MusicValue musicValue = new MusicValue(TimeCode, TimeCode2);
             var serialize = MessageParser.Encode(musicValue);
             client.SendAsync(serialize);
             _testOutputHelper.WriteLine($"Send {serialize.Length.ToString()}bytes : Client -> Server");
