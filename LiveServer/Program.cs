@@ -28,6 +28,7 @@ namespace LiveServer
                 {
                     try
                     {
+                        MusicValue.CurrentTime = DateTime.Now.Subtract(new DateTime(1970, 1, 1)).TotalMilliseconds;
                         await x.Item3.Client.SendAsync(MessageParser.Encode(MusicValue), SocketFlags.None);
                         Console.WriteLine("send" + MusicValue.StartTimeCode);
                     }

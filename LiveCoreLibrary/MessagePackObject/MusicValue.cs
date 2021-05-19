@@ -8,7 +8,7 @@ namespace LiveCoreLibrary
     public class MusicValue
     {
         [Key(0)] public double StartTimeCode { get; }
-        [Key(1)] public double CurrentTime { get; }
+        [Key(1)] public double CurrentTime;
         public MusicValue(double startTimeCode, double currentTime)
         {
             this.StartTimeCode = startTimeCode;
