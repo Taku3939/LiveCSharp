@@ -156,9 +156,7 @@
     private void Publish()
     {
         if (!client.IsConnected) return;
-        var currentTime = DateTime.Now.Subtract(new DateTime(1970, 1, 1)).TotalMilliseconds;
-        var totalTime = new DateTime(year, month, day, hour, minute, seconds).Subtract(new DateTime(1970, 1, 1)).TotalMilliseconds;
-        client.SendAsync(new MusicValue(totalTime, currentTime));
+        client.SendAsync(new SetMusicValue(year, month, day, hour, minute, seconds));
     }
 
     /// <summary>

@@ -7,7 +7,8 @@ namespace LiveCoreLibrary
     [MessagePackObject]
     public class MusicValue
     {
-        [Key(0)] public double StartTimeCode { get; }
+        [Key(0)] public double StartTimeCode;
+        
         [Key(1)] public double CurrentTime;
         public MusicValue(double startTimeCode, double currentTime)
         {
