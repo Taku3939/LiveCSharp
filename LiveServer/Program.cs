@@ -46,7 +46,7 @@ namespace LiveServer
                     try
                     {
                         var value = MessageParser.Decode<SetMusicValue>(x.Item2);
-                        MusicValue.StartTimeCode = new DateTime(value.year, value.month,value.day,value.hour, value.minute, value.seconds).Subtract(new DateTime(1970, 1, 1)).TotalMilliseconds;
+                        MusicValue.StartTimeCode = new DateTime(value.year, value.month,value.day,value.hour, value.minute, value.seconds).ToUniversalTime().Subtract(new DateTime(1970, 1, 1)).TotalMilliseconds;
                         MusicValue.CurrentTime = DateTime.Now.Subtract(new DateTime(1970, 1, 1)).TotalMilliseconds;
                       
                         foreach (var client in holder.GetClients())
