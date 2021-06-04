@@ -46,12 +46,9 @@ namespace LiveServer
                     try
                     {
                         var value = MessageParser.Decode<SetMusicValue>(x.Item2);
-                        MusicValue.StartTimeCode = new DateTime(value.year, value.month,value.day,value.hour, value.minute, value.seconds).ToUniversalTime().Subtract(new DateTime(1970, 1, 1)).TotalMilliseconds;
-                        MusicValue.CurrentTime = DateTime.Now.ToUniversalTime().Subtract(new DateTime(1970, 1, 1)).TotalMilliseconds;
-                        
-                        Console.WriteLine(MusicValue.StartTimeCode);
-                        Console.WriteLine(MusicValue.CurrentTime);
-                      
+                        MusicValue.StartTimeCode =  new DateTime(value.year, value.month,value.day,value.hour, value.minute, value.seconds).Subtract(new DateTime(1970, 1, 1)).TotalMilliseconds;
+                        MusicValue.CurrentTime = DateTime.Now.Subtract(new DateTime(1970, 1, 1)).TotalMilliseconds;
+
                         foreach (var client in holder.GetClients())
                             await client.Client.SendAsync(MessageParser.Encode(MusicValue), SocketFlags.None);
                     }catch(Exception){}
@@ -100,9 +97,26 @@ namespace LiveServer
             //         Console.WriteLine(chatMessage.message);
             //     });
 
+            Task.Run(async () =>
+            {
+                while (true)
+                {
+                    if(holder.GetClients().Count == 0) continue;
+                    
+                    MusicValue.CurrentTime = DateTime.Now.Subtract(new DateTime(1970, 1, 1)).TotalMilliseconds;
+
+                    if (MusicValue.CurrentTime == MusicValue.StartTimeCode)
+                    {
+                        foreach (var client in holder.GetClients())
+                            await client.Client.SendAsync(MessageParser.Encode(MusicValue), SocketFlags.None);
+                    }
+                }
+            });
+                
             while (true)
             {
                 var line = Console.ReadLine();
+                
                 if (line == "quit")
                 {
                     server.Close();
@@ -110,5 +124,6 @@ namespace LiveServer
                 }
             }
         }
+        
     }
 }
