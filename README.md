@@ -1,5 +1,5 @@
 # LiveCSharp
-This is Tcp rest APi Server.
+This is Tcp rest API Server.
 ## Project info
 
  `./LiveServer`     : Server project for live <br>
