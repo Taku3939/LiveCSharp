@@ -161,6 +161,8 @@ namespace LiveServer
                     {
                         if (source.IsCancellationRequested) return;
                         var clients = _holder.GetClients();
+
+                        Queue<TcpClient> rmCl = new Queue<TcpClient>();
                         foreach (var client in clients)
                         {
                             while (client.Available != 0 && client.Connected)
@@ -177,15 +179,21 @@ namespace LiveServer
                                     await using MemoryStream mStream = new MemoryStream();
                                     if (!mStream.CanRead) return;
                                     byte[] buffer = new byte[256];
+                                    CancellationTokenSource cts = new CancellationTokenSource();
                                     try
                                     {
-                                        int dataSize = await nStream.ReadAsync(buffer, 0, buffer.Length, source.Token);
+                                        if (!client.Connected)
+                                        {
+                                            if (rmCl.Contains(client)) rmCl.Enqueue(client);
+                                            return;
+                                        }
+                                        
+                                        int dataSize = await nStream.ReadAsync(buffer, 0, buffer.Length, cts.Token);
                                         if (dataSize < 5) return;
                                         byte[] dist = new byte[dataSize];
                                         Buffer.BlockCopy(buffer, 0, dist, 0, dataSize);
                                         if (client.Connected && MessageParser.CheckProtocol(dist))
                                         {
-                                            
                                             var type = MessageParser.DecodeType(dist);
                                             OnMessageReceived?.Invoke(
                                                 new Tuple<MessageType, byte[], TcpClient>(type, dist, client));
@@ -195,6 +203,11 @@ namespace LiveServer
                                     {
                                         Console.WriteLine("Task Canceled");
                                     }
+                                    catch (SocketException)
+                                    {
+                                        if (rmCl.Contains(client)) rmCl.Enqueue(client);
+                                        cts.Cancel();
+                                    }
                                     catch (Exception e)
                                     {
                                         Console.WriteLine(e.ToString());
@@ -203,6 +216,8 @@ namespace LiveServer
                             }
                         }
 
+                        if(rmCl.Count > 0)
+                            _holder.Remove(rmCl.Dequeue());
                         await Task.Delay(interval, source.Token);
                     }
                     catch (OperationCanceledException)

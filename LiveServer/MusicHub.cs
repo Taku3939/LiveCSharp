@@ -13,7 +13,6 @@ namespace LiveServer
     public class MusicHub
     {
         private MusicValue MusicValue = new MusicValue(-1, -1);
-
         private ISocketHolder holder { get; }
         public MusicHub(ISocketHolder holder)
         {
@@ -30,7 +29,7 @@ namespace LiveServer
                     if (Math.Abs(MusicValue.CurrentTime - MusicValue.StartTimeCode) < 1)
                     {
                         foreach (var client in holder.GetClients())
-                            await client.Client.SendAsync(MessageParser.Encode("/m/get", MusicValue), SocketFlags.None);
+                            await client.Client.SendAsync(MessageParser.Encode(REST.MUSIC_GET_VALUE, MusicValue), SocketFlags.None);
                     }
                 }
             });
@@ -45,7 +44,7 @@ namespace LiveServer
             try
             {
                 MusicValue.CurrentTime = DateTime.Now.Subtract(new DateTime(1970, 1, 1)).TotalMilliseconds;
-                await client.Client.SendAsync(MessageParser.Encode("/m/get", MusicValue), SocketFlags.None);
+                await client.Client.SendAsync(MessageParser.Encode(REST.MUSIC_GET_VALUE, MusicValue), SocketFlags.None);
                 Console.WriteLine("send" + MusicValue.StartTimeCode);
             }
             catch (Exception e)
@@ -63,12 +62,11 @@ namespace LiveServer
         {
             try
             {
-             
                 MusicValue.StartTimeCode =  new DateTime(value.year, value.month,value.day,value.hour, value.minute, value.seconds).Subtract(new DateTime(1970, 1, 1)).TotalMilliseconds;
                 MusicValue.CurrentTime = DateTime.Now.Subtract(new DateTime(1970, 1, 1)).TotalMilliseconds;
         
                 foreach (var client in holder.GetClients())
-                    await client.Client.SendAsync(MessageParser.Encode("/m/set", MusicValue), SocketFlags.None);
+                    await client.Client.SendAsync(MessageParser.Encode(REST.MUSIC_GET_VALUE, MusicValue), SocketFlags.None);
             }catch(Exception){}
         }
     }

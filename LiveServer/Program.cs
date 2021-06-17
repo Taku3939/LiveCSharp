@@ -26,7 +26,7 @@ namespace LiveServer
                     var body = MessageParser.Decode(args.Item2, out var rest);
                     switch (rest.rest)
                     {
-                        case "/m/set":
+                        case REST.MUSIC_SET_VALUE:
                             hub.SetTime(MessageParser.DecodeBody<SetMusicValue>(body));
                             break;
 
@@ -34,14 +34,14 @@ namespace LiveServer
                         //     hub.UpdateTime(MessageParser.DecodeBody<MusicValue>(body));
                         //     break;
 
-                        case "/m/get":
+                        case REST.MUSIC_GET_VALUE:
                             hub.GetTime(args.Item3);
                             break;
                         
                         default:
                             break;
                     }
-                    
+
                     if (rest.methodType == MethodType.Post)
                     {
                         foreach (var client in holder.GetClients())
