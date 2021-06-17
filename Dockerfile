@@ -1,7 +1,6 @@
 FROM mcr.microsoft.com/dotnet/core/sdk:3.1 as builder
 COPY ./LiveServer /app/LiveServer
-COPY ./MessageObject /app/MessageObject
-COPY ./VLLLiveEngine /app/VLLLiveEngine
+COPY ./LiveCoreLibrary /app/LiveCoreLibrary
 RUN dotnet publish -c Relase -o /app/LiveServer/build /app/LiveServer/LiveServer.csproj
 RUN rm /app/LiveServer/build/LiveServer.pdb
 

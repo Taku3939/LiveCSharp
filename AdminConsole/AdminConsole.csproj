@@ -5,12 +5,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\MessageObject\MessageObject.csproj" />
-      <ProjectReference Include="..\VLLLiveEngine\VLLLiveEngine.csproj" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <PackageReference Include="UniRx" Version="5.4.1" />
+      <ProjectReference Include="..\LiveCoreLibrary\LiveCoreLibrary.csproj" />
     </ItemGroup>
 
 </Project>

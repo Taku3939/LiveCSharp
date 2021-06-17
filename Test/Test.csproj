@@ -8,7 +8,6 @@
 
     <ItemGroup>
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.7.1" />
-        <PackageReference Include="UniRx" Version="5.4.1" />
         <PackageReference Include="xunit" Version="2.4.1" />
         <PackageReference Include="xunit.runner.visualstudio" Version="2.4.3">
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -19,7 +18,5 @@
             <PrivateAssets>all</PrivateAssets>
         </PackageReference>
         <ProjectReference Include="..\LiveServer\LiveServer.csproj" />
-        <ProjectReference Include="..\VLLLiveEngine\VLLLiveEngine.csproj" />
-        <ProjectReference Include="..\MessageObject\MessageObject.csproj" />
     </ItemGroup>
 </Project>

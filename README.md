@@ -1,39 +1,52 @@
 # LiveCSharp
+This is Tcp rest API Server.
+## Project info
 
+ `./LiveServer`     : Server project for live <br>
+ `./ChatClient`     : Client that chat with multiple people.(Use test)<br>
+ `./AdminConsole`   : WebClient to set playing time of live <br>
+ `./test`           : Test to see if the server works properly <br>
+ `./LiveCoreLibrary`: Library for these project<br>
 
+## How to use
 
-TakuがLiveのテストをするためのプロジェクト
-
-# LiveServer
-
-run
+### server run
 
 ```
 cd LiveServer
 dotnet run
 ```
 
-build
+
+### server test
+
+using [xunit](https://xunit.net/) that works with c# <br>
+
+
+```
+dotnet test
+```
+
+### server build
+
+Use [docker](https://www.docker.com/). Therefore, it is necessary to build a docker environment. <br>
+Build based on this [Dockerfile](https://github.com/MIKUEC2020/LiveCSharp/blob/master/Dockerfile)
 
 ```
 docker build -t "vll-event-server"
 ```
 
-# LiveClient
+if you set Github Actions, image auto generate and push container repository of Gcp based on this [cloudbuild.yml](https://github.com/MIKUEC2020/LiveCSharp/blob/master/cloudbuild.yml)
 
-run
+### chat client run
 
 ```
-cd LiveClient
+cd ChatClient
 dotnet run
 ```
 
-
-
 ## License
 This software is released under the MIT License, see LICENSE.
-
-
 
 ## Author
 

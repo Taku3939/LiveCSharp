@@ -4,13 +4,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChatClient", "ChatClient\Ch
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LiveServer", "LiveServer\LiveServer.csproj", "{2FA7779B-3025-4A53-9643-B8A25F0A1BE0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MessageObject", "MessageObject\MessageObject.csproj", "{B586777A-75AB-4936-9DB5-77FE5DD963A0}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LiveCoreLibrary", "LiveCoreLibrary\LiveCoreLibrary.csproj", "{B586777A-75AB-4936-9DB5-77FE5DD963A0}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AdminConsole", "AdminConsole\AdminConsole.csproj", "{F3CEF822-DAAF-4964-87F5-3C2393347897}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Test", "Test\Test.csproj", "{9D14AEC4-770D-40B9-892B-67E344CBC7E0}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VLLLiveEngine", "VLLLiveEngine\VLLLiveEngine.csproj", "{2B7248A9-EF14-4CEC-B561-A98F2C4D2575}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -38,9 +36,5 @@ Global
 		{9D14AEC4-770D-40B9-892B-67E344CBC7E0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9D14AEC4-770D-40B9-892B-67E344CBC7E0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9D14AEC4-770D-40B9-892B-67E344CBC7E0}.Release|Any CPU.Build.0 = Release|Any CPU
-		{2B7248A9-EF14-4CEC-B561-A98F2C4D2575}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{2B7248A9-EF14-4CEC-B561-A98F2C4D2575}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{2B7248A9-EF14-4CEC-B561-A98F2C4D2575}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{2B7248A9-EF14-4CEC-B561-A98F2C4D2575}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

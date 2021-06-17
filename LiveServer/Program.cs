@@ -1,90 +1,63 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Net.Sockets;
 using System.Threading.Tasks;
-using MessageObject;
-using UI.Hub;
-using UniRx;
-using VLLLiveEngine;
+using LiveCoreLibrary;
+
 namespace LiveServer
 {
     class Program
     {
-        private static MusicValue MusicValue = new MusicValue(0);
-        private static async Task Main(string[] args)
+        const int Port = 30000;
+
+        private static void Main(string[] args)
         {
             var holder = new ConcurrentSocketHolder();
-            int port = 30000;
-            Server server = new Server(port, holder);
+
+            Server server = new Server(Port, holder);
             server.AcceptLoop(100);
             server.HealthCheck(100);
             server.ReceiveLoop(10);
 
-            //現在のミュージックの取得
-            server.OnMessageReceived
-                .Where(x => x.Item1.MessageTypeContext== typeof(VLLLiveEngine.Unit).ToString())
-                .Where(x => x.Item1.Method == Method.Get)
-                .Subscribe(async x =>
+            var hub = new MusicHub(holder);
+            server.OnMessageReceived += async (args) =>
+            {
+                try
                 {
-                    try
+                    var body = MessageParser.Decode(args.Item2, out var rest);
+                    switch (rest.rest)
                     {
-                        await x.Item3.Client.SendAsync(MessageParser.Encode(MusicValue, typeof(SyncHub)), SocketFlags.None);
-                        Console.WriteLine("send" + MusicValue.StartTimeCode);
-                    }
-                    catch (Exception e)
-                    {
-                        Console.WriteLine(e.ToString());
-                    }
-                });
+                        case REST.MUSIC_SET_VALUE:
+                            hub.SetTime(MessageParser.DecodeBody<SetMusicValue>(body));
+                            break;
 
-     
-                //MusicValueの更新
-            server.OnMessageReceived
-                .Where(x => x.Item1.MessageTypeContext == typeof(MusicValue).ToString())
-                .Where(x => x.Item1.Method == Method.Post)
-                .Subscribe(async x =>
-                {
-                    try
-                    {
-                        MusicValue = MessageParser.Decode<MusicValue>(x.Item2);
-                        Console.WriteLine("Set StarTime : " + MusicValue.StartTimeCode);
-                    }
-                    catch (Exception exception)
-                    {
-                        Console.WriteLine(exception.ToString());
-                    }
-                });
+                        // case "/m/update":
+                        //     hub.UpdateTime(MessageParser.DecodeBody<MusicValue>(body));
+                        //     break;
 
-            //メッセージの一括送信
-            server.OnMessageReceived
-                .Where(x => x.Item1.Method == Method.Post)
-                .Subscribe(async x =>
-                {
-                    try
+                        case REST.MUSIC_GET_VALUE:
+                            hub.GetTime(args.Item3);
+                            break;
+                        
+                        default:
+                            break;
+                    }
+
+                    if (rest.methodType == MethodType.Post)
                     {
                         foreach (var client in holder.GetClients())
-                            await client.Client.SendAsync(x.Item2, SocketFlags.None);
+                            await client.Client.SendAsync(args.Item2, SocketFlags.None);
                     }
-                    catch (Exception e)
-                    {
-                        Console.WriteLine(e.ToString());
-                    }
-                });
-
-            // //チャットをコンソールに表示するためのDebug用
-            // server.OnMessageReceived
-            //     .Where(x => x.Item1.methodType == MethodType.Post)
-            //     .Where(x => x.Item1.type == typeof(ChatMessage))
-            //     .Subscribe(x =>
-            //     {
-            //         Console.Write("Received : ");
-            //         ChatMessage chatMessage = MessageParser.Decode<ChatMessage>(x.Item2);
-            //         Console.WriteLine(chatMessage.message);
-            //     });
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e.ToString());
+                }
+            };
 
             while (true)
             {
                 var line = Console.ReadLine();
+
                 if (line == "quit")
                 {
                     server.Close();
@@ -94,9 +67,3 @@ namespace LiveServer
         }
     }
 }
-
-namespace UI.Hub
-{
-    public class SyncHub{}
-}
-

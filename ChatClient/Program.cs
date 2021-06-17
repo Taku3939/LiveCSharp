@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Threading.Tasks;
-using MessageObject;
+using LiveCoreLibrary;
 using MessagePack;
-using UniRx;
-using VLLLiveEngine;
+
 namespace ChatClient
 {
     class Program
@@ -16,26 +15,31 @@ namespace ChatClient
         {
             client = new Client();
             await client.ConnectAsync(host, port);
-            
+
             //チャットを受け取ったときのイベント登録
-            client.OnMessageReceived?
-                .Where(e => e.Item1.MessageTypeContext == typeof(ChatMessage).ToString())
-                .Subscribe(e => Console.WriteLine(MessagePackSerializer.Deserialize<ChatMessage>(e.Item2).message));
-            
+            client.OnMessageReceived += (args) =>
+            {
+                var body = MessageParser.Decode(args.Item2, out var rest);
+                switch(rest.rest) 
+                {
+                    case "/c/send":
+                        Console.WriteLine(MessagePackSerializer.Deserialize<ChatMessage>(body).Message);
+                        break;
+                };
+            };
+
             //受信開始
             client.ReceiveStart(100);
             Console.WriteLine("名前を入力してください...");
-
-            ChatHub chatHub = new ChatHub(client);
             var name = Console.ReadLine();
-            var id = (ulong) new Random().Next();
             while (true)
             {
                 Console.WriteLine("メッセージを入力してください...");
                 var r = Console.ReadLine();
                 if (r == "quit") break;
-                var m = new ChatMessage(id, $"{name} : {r}");
-                chatHub.Send(m);
+                var m = new ChatMessage((ulong) new Random().Next(), $"{name} : {r}");
+                var buffer = MessageParser.Encode("/c/send", m);
+                client.SendAsync(buffer);
             }
 
             client.Close();
