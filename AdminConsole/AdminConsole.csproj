@@ -8,8 +8,4 @@
       <ProjectReference Include="..\LiveCoreLibrary\LiveCoreLibrary.csproj" />
     </ItemGroup>
 
-    <ItemGroup>
-      <PackageReference Include="UniRx" Version="5.4.1" />
-    </ItemGroup>
-
 </Project>

@@ -5,7 +5,6 @@ using LiveCoreLibrary;
 using Xunit;
 using LiveServer;
 using MessagePack;
-using UniRx;
 using Xunit.Abstractions;
 
 namespace Test
@@ -15,7 +14,7 @@ namespace Test
         private readonly ITestOutputHelper _testOutputHelper;
         private const string Host = "127.0.0.1";
         private const int Port = 30000;
-
+        private string rest = "/m/update";
         public ServerTest(ITestOutputHelper testOutputHelper)
         {
             _testOutputHelper = testOutputHelper;
@@ -37,29 +36,31 @@ namespace Test
             server.ReceiveLoop(10);
             
             //受信時のイベント登録
-            server.OnMessageReceived
-                .Where(x => x.Item1.type == typeof(MusicValue))
-                .Where(x => x.Item1.methodType == MethodType.Post)
-                .Subscribe(async x =>
+            server.OnMessageReceived += async (x) =>
+            {
+                try
                 {
-                    try
+                   
+                    if (x.Item1.rest == rest)
                     {
                         _testOutputHelper.WriteLine($"Received {x.Item2.Length.ToString()}bytes: Client -> Server");
-                        var value = MessageParser.Decode<MusicValue>(x.Item2);
+                        var value = MessageParser.DecodeBody<MusicValue>(x.Item2);
                         Assert.Equal(value.StartTimeCode, TimeCode);
                         Assert.Equal(value.CurrentTime, TimeCode2);
                         //全てのクライアントへの送信
                         foreach (var c in holder.GetClients())
                             await c.Client.SendAsync(x.Item2, SocketFlags.None);
-                        
-                        _testOutputHelper.WriteLine($"Send {x.Item2.Length.ToString()}: Server -> {holder.GetClients().Count.ToString()}Clients");
+
+                        _testOutputHelper.WriteLine(
+                            $"Send {x.Item2.Length.ToString()}: Server -> {holder.GetClients().Count.ToString()} Clients");
                     }
-                    catch (Exception e)
-                    {
-                        //エラー時
-                        Assert.Throws<Exception>(() => _testOutputHelper.WriteLine(e.ToString()));
-                    }
-                });
+                }
+                catch (Exception e)
+                {
+                    //エラー時
+                    Assert.Throws<Exception>(() => _testOutputHelper.WriteLine(e.ToString()));
+                }
+            };
 
             await Task.Delay(1000);
 
@@ -72,20 +73,17 @@ namespace Test
             
             Client client = new Client();
             //クライアントの接続時のコード (クライアント側)
-            client.OnConnected.Subscribe(_ => _testOutputHelper.WriteLine("Connected : client"));
+            client.OnConnected += () => _testOutputHelper.WriteLine("Connected : client");
             
             //受信時のイベントを追加する
-            client.OnMessageReceived
-                .Where(e => e.Item1.type == typeof(MusicValue))
-                .Subscribe(e =>
-                {
-                    _testOutputHelper.WriteLine($"Received {e.Item2.Length.ToString()}bytes : Server -> Client");
-                    var value = MessagePackSerializer.Deserialize<MusicValue>(e.Item2);
-                    Assert.Equal(value.StartTimeCode, TimeCode);
-                    Assert.Equal(value.CurrentTime, TimeCode2);
-                    flag = true;
-                });
-            
+            client.OnMessageReceived += (e) =>
+            {
+                _testOutputHelper.WriteLine($"Received {e.Item2.Length.ToString()}bytes : Server -> Client");
+                var value = MessageParser.DecodeBody<MusicValue>(e.Item2);
+                Assert.Equal(value.StartTimeCode, TimeCode);
+                Assert.Equal(value.CurrentTime, TimeCode2);
+                flag = true;
+            };
             //接続要求
             await client.ConnectAsync(Host, Port);
             
@@ -94,7 +92,7 @@ namespace Test
             
             //メッセージの送信
             MusicValue musicValue = new MusicValue(TimeCode, TimeCode2);
-            var serialize = MessageParser.Encode(musicValue);
+            var serialize = MessageParser.Encode(rest, musicValue);
             client.SendAsync(serialize);
             _testOutputHelper.WriteLine($"Send {serialize.Length.ToString()}bytes : Client -> Server");
             

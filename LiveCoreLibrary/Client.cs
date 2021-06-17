@@ -6,7 +6,6 @@ using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 using MessagePack;
-using UniRx;
 
 namespace LiveCoreLibrary
 {
@@ -15,17 +14,13 @@ namespace LiveCoreLibrary
         public bool IsDisposed => this.client == null;
         public bool IsConnected => this.client.Connected && this.client != null;
         private TcpClient client;
-        private CancellationTokenSource Source;
+        private CancellationTokenSource cts;
         private readonly SynchronizationContext _context;
 
-        private readonly Subject<UniRx.Tuple<MessageType, byte[]>> onMessageReceivedSubject =
-            new Subject<UniRx.Tuple<MessageType, byte[]>>();
+        public event Action<Tuple<MessageType, byte[], TcpClient>> OnMessageReceived;
 
-        private readonly Subject<UniRx.Unit> OnConnectedSubject = new Subject<UniRx.Unit>();
-        private readonly Subject<UniRx.Unit> OnDisconnectedSubject = new Subject<UniRx.Unit>();
-        public UniRx.IObservable<UniRx.Tuple<MessageType, byte[]>> OnMessageReceived => this.onMessageReceivedSubject;
-        public UniRx.IObservable<UniRx.Unit> OnConnected => this.OnConnectedSubject;
-        public UniRx.IObservable<UniRx.Unit> OnDisconnected => this.OnDisconnectedSubject;
+        public event Action OnConnected;
+        public event Action OnDisconnected;
 
         /// <summary>
         /// This Constructor must call by main thread
@@ -50,9 +45,10 @@ namespace LiveCoreLibrary
                 await Task.Delay(100);
                 client = new TcpClient();
             }
+
             await client.ConnectAsync(host, port);
-            Source = new CancellationTokenSource();
-            OnConnectedSubject.OnNext(new UniRx.Unit());
+            cts = new CancellationTokenSource();
+            OnConnected?.Invoke();
         }
 
         /// <summary>
@@ -69,18 +65,19 @@ namespace LiveCoreLibrary
                 await Task.Delay(100);
                 client = new TcpClient();
             }
+
             await client.ConnectAsync(host, port);
-            Source = new CancellationTokenSource();
-            OnConnectedSubject.OnNext(new UniRx.Unit());
+            cts = new CancellationTokenSource();
+            OnConnected?.Invoke();
         }
 
         /// <summary>
         /// 非同期送信
         /// </summary>
         /// <param name="t">MessagePack Object</param>
-        public void SendAsync<T>(T t)
+        public void SendAsync<T>(string rest, T t)
         {
-            var serialize = MessageParser.Encode(t);
+            var serialize = MessageParser.Encode(rest, t);
             if (!client.Connected)
             {
                 Console.WriteLine("ClientがCloseしています");
@@ -104,7 +101,7 @@ namespace LiveCoreLibrary
                 Console.WriteLine("ClientがCloseしています");
                 return;
             }
-            
+
             var sArgs = new SocketAsyncEventArgs();
             sArgs.SetBuffer(serialize, 0, serialize.Length);
             sArgs.UserToken = serialize;
@@ -122,59 +119,64 @@ namespace LiveCoreLibrary
                 {
                     try
                     {
-                        if (Source.IsCancellationRequested) return;
-                        if (client == null || !client.Connected)
-                        {
-                            return;
-                        }
+                        if (cts.IsCancellationRequested) return;
 
-                        if (client.Available != 0)
+                        while (client.Available != 0 && client.Connected)
                         {
                             NetworkStream nStream = client.GetStream();
-
-                            using MemoryStream mStream = new MemoryStream();
-                            byte[] buffer = new byte[256];
-                            try
+                            if (!nStream.CanRead)
                             {
-                                int dataSize = await nStream.ReadAsync(buffer, 0, buffer.Length, Source.Token);
-                                await mStream.WriteAsync(buffer, 0, dataSize, Source.Token);
-                            }
-                            catch (Exception e)
-                            {
-                                Console.WriteLine("256以下のメッセージしか処理しない : " + e.ToString());
+                                Console.WriteLine("Can not read");
                                 return;
                             }
 
-                            byte[] receiveBytes = mStream.GetBuffer();
-                            if (MessageParser.CheckProtocol(buffer))
+                            var _ = Task.Run(async () =>
                             {
-                                if (_context == null) { return; }
-                                
-                                var body = MessageParser.Decode(receiveBytes, out var type);
-                                _context.Post(
-                                    _ => onMessageReceivedSubject.OnNext(new UniRx.Tuple<MessageType, byte[]>(type, body)),
-                                    null);
-                            }
+                                await using MemoryStream mStream = new MemoryStream();
+                                if (!mStream.CanRead) return;
+                                byte[] buffer = new byte[256];
+                                try
+                                {
+                                    int dataSize = await nStream.ReadAsync(buffer, 0, buffer.Length, cts.Token);
+                                    if (dataSize < 5) return;
+                                    byte[] dist = new byte[dataSize];
+                                    Buffer.BlockCopy(buffer, 0, dist, 0, dataSize);
+                                    if (client.Connected && MessageParser.CheckProtocol(dist))
+                                    {
+                                        var type = MessageParser.DecodeType(dist);
+                                        OnMessageReceived?.Invoke(
+                                            new Tuple<MessageType, byte[], TcpClient>(type, dist, client));
+                                    }
+                                }
+                                catch (OperationCanceledException e)
+                                {
+                                    Console.WriteLine("Task Canceled");
+                                }
+                                catch (Exception e)
+                                {
+                                    Console.WriteLine(e.ToString());
+                                }
+                            }, cts.Token);
                         }
 
-                        await Task.Delay(interval, Source.Token);
+                        await Task.Delay(interval, cts.Token);
                     }
-                    catch (MessagePackSerializationException e)
+                    catch (OperationCanceledException e)
                     {
-                        Console.WriteLine(e);
+                        Console.WriteLine("Task Canceled");
                     }
                     catch (Exception e)
                     {
-                        Console.WriteLine(e);
+                        Console.WriteLine(e.ToString());
                     }
                 }
-            }, Source.Token);
+            }, cts.Token);
         }
 
         /// <summary>
         /// 受信停止
         /// </summary>
-        public void ReceiveStop() => Source?.Cancel();
+        public void ReceiveStop() => cts?.Cancel();
 
 
         /// <summary>
@@ -190,20 +192,20 @@ namespace LiveCoreLibrary
                 {
                     try
                     {
-                        if (Source.IsCancellationRequested) return;
+                        if (cts.IsCancellationRequested) return;
                         if (!CheckConnected(client.Client))
                         {
                             Close();
                         }
-                        
-                        await Task.Delay(interval, Source.Token);
+
+                        await Task.Delay(interval, cts.Token);
                     }
                     catch (Exception e)
                     {
                         Console.WriteLine(e.ToString());
                     }
                 }
-            }, Source.Token);
+            }, cts.Token);
         }
 
         /// <summary>
@@ -213,7 +215,7 @@ namespace LiveCoreLibrary
         {
             ReceiveStop();
             client?.Close();
-            OnDisconnectedSubject.OnNext(new UniRx.Unit());
+            OnDisconnected?.Invoke();
         }
 
 

@@ -6,7 +6,6 @@ using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 using LiveCoreLibrary;
-using UniRx;
 
 namespace LiveServer
 {
@@ -19,12 +18,8 @@ namespace LiveServer
         private readonly ISocketHolder _holder;
         private readonly List<CancellationTokenSource> _sources;
 
-        private readonly Subject<UniRx.Tuple<MessageType, byte[], TcpClient>> onMessageReceivedSubject =
-            new Subject<UniRx.Tuple<MessageType, byte[], TcpClient>>();
-
-        public UniRx.IObservable<UniRx.Tuple<MessageType, byte[], TcpClient>> OnMessageReceived =>
-            this.onMessageReceivedSubject;
-
+        public event Action<Tuple<MessageType, byte[], TcpClient>> OnMessageReceived;
+        
         /// <summary>
         /// コンストラクタ
         /// </summary>
@@ -69,7 +64,7 @@ namespace LiveServer
                         await Task.Delay(interval, source.Token);
                         source.Token.ThrowIfCancellationRequested();
                     }
-                    catch (OperationCanceledException exception)
+                    catch (OperationCanceledException)
                     {
                         Console.WriteLine("Task Canceled");
                     }
@@ -137,7 +132,7 @@ namespace LiveServer
                         await Task.Delay(interval, source.Token);
                         source.Token.ThrowIfCancellationRequested();
                     }
-                    catch (OperationCanceledException exception)
+                    catch (OperationCanceledException)
                     {
                         Console.WriteLine("Task Canceled");
                     }
@@ -190,13 +185,13 @@ namespace LiveServer
                                         Buffer.BlockCopy(buffer, 0, dist, 0, dataSize);
                                         if (client.Connected && MessageParser.CheckProtocol(dist))
                                         {
+                                            
                                             var type = MessageParser.DecodeType(dist);
-                                            Console.WriteLine("MessageReceived : " + type.type);
-                                            onMessageReceivedSubject.OnNext(
-                                                new UniRx.Tuple<MessageType, byte[], TcpClient>(type, dist, client));
+                                            OnMessageReceived?.Invoke(
+                                                new Tuple<MessageType, byte[], TcpClient>(type, dist, client));
                                         }
                                     }
-                                    catch (OperationCanceledException e)
+                                    catch (OperationCanceledException)
                                     {
                                         Console.WriteLine("Task Canceled");
                                     }
@@ -210,7 +205,7 @@ namespace LiveServer
 
                         await Task.Delay(interval, source.Token);
                     }
-                    catch (OperationCanceledException e)
+                    catch (OperationCanceledException)
                     {
                         Console.WriteLine("Task Canceled");
                     }

@@ -1,8 +1,6 @@
 ﻿@page "/counter"
 @using LiveCoreLibrary
 @using MessagePack
-@using UniRx
-@using System.Net
 
 <h1>Console</h1>
 <table style="border:none">
@@ -144,9 +142,12 @@
         client.ReceiveStart(100);
         client.HealthCheck(100);
         //register event
-        client?.OnMessageReceived?
-            .Where(e => e.Item1.type == typeof(MusicValue))
-            .Subscribe(e => OnReceived(MessagePackSerializer.Deserialize<MusicValue>(e.Item2)));
+        client.OnMessageReceived += (args) =>
+        {
+            var body = MessageParser.Decode(args.Item2, out var rest);
+            if (rest.rest == "/m/get") OnReceived(MessagePackSerializer.Deserialize<MusicValue>(body));
+
+        };
     }
 
 
@@ -156,7 +157,7 @@
     private void Publish()
     {
         if (!client.IsConnected) return;
-        client.SendAsync(new SetMusicValue(year, month, day, hour, minute, seconds));
+        client.SendAsync("/m/set",new SetMusicValue(year, month, day, hour, minute, seconds));
     }
 
     /// <summary>
@@ -167,12 +168,12 @@
         var total = TimeSpan.FromMilliseconds(value.StartTimeCode);
 
         currentTime = new DateTime(1970, 1, 1) + total;
-        //received status render 
+    //received status render 
         this.StateHasChanged();
         client.Close();
         this.StateHasChanged();
     }
-    
+
     /// <summary>
     /// Ask the server for the current live time
     /// </summary>
@@ -180,7 +181,7 @@
     {
         if (!client.IsConnected) return;
 
-        client.SendAsync(MessageParser.EncodeCustom(MethodType.Get, new LiveCoreLibrary.Unit()));
+        client.SendAsync(MessageParser.Encode("/m/get", new LiveCoreLibrary.Unit(), MethodType.Get));
     }
 
 }
