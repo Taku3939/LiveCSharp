@@ -20,7 +20,7 @@ namespace LiveServer
         private readonly List<CancellationTokenSource> _sources;
 
         public event Action<Data> OnMessageReceived;
-
+        
         /// <summary>
         /// コンストラクタ
         /// </summary>
@@ -33,7 +33,7 @@ namespace LiveServer
             _listener = new TcpListener(IPAddress.Any, port);
             _listener.Start();
 #if DEBUG
-            Console.WriteLine($"Listening start...:{port}");
+            Console.WriteLine($"[SERVER]Listening start... : {port}");
 #endif
         }
 
@@ -60,7 +60,15 @@ namespace LiveServer
                                 removeList.Add(client);
 
                         foreach (var client in removeList)
+                        {
+                            if (client.Client.RemoteEndPoint is IPEndPoint remoteEndPoint)
+                                Console.WriteLine(
+                                    $"[SERVER]{IPAddress.Parse(remoteEndPoint.Address.ToString())}: {remoteEndPoint.Port.ToString()} DISCONNECT");
                             _holder.Remove(client);
+
+                            //Close処理
+                            client.Close();
+                        }
 
                         await Task.Delay(interval, source.Token);
                         source.Token.ThrowIfCancellationRequested();
@@ -125,9 +133,9 @@ namespace LiveServer
                             _holder.Add(client);
 #if DEBUG
                             if (remoteEndPoint != null)
-                                Console.WriteLine($"Connected: [No name] " +
-                                                  $"({remoteEndPoint.Address}: {remoteEndPoint.Port})");
-                            Console.WriteLine("client count is " + _holder.GetClients().Count);
+                                Console.WriteLine(
+                                    $"[SERVER]{remoteEndPoint.Address}: {remoteEndPoint.Port.ToString()} CONNECT");
+                            Console.WriteLine($"[SERVER] client count : {_holder.GetClients().Count.ToString()}");
 #endif
                         }
 
@@ -197,11 +205,11 @@ namespace LiveServer
                                         $"WARNING >> {client.Client.RemoteEndPoint} : Can not read this NetworkStream");
                                     break;
                                 }
-                                
+
                                 // メモリストリーム上に受信したデータの書き込み
                                 // ※ 受信データに制限を設けていない
                                 await using MemoryStream mStream = new MemoryStream();
-                           
+
                                 while (nStream.DataAvailable)
                                 {
                                     byte[] buffer = new byte[256];
@@ -224,19 +232,19 @@ namespace LiveServer
                                             //if (client.Connected && MessageParser.CheckProtocol(dist))
                                         {
                                             var command = MessageParser.Decode(dist);
-                                            OnMessageReceived?.Invoke(new (command, client, dist.Length));
+                                            OnMessageReceived?.Invoke(new(command, client, dist.Length));
                                         }
                                     }, source.Token));
-                                    
                                 }
-                                
+
                                 //受信時のイベントを実行
                                 // ※ とりあえずawaitしているが消すべきかな？
                                 await Task.WhenAll(receiveEvents);
                                 await Task.Delay(interval, source.Token);
-                                
                             }
-                            catch(IOException){}
+                            catch (IOException)
+                            {
+                            }
                             catch (SocketException e)
                             {
                                 // SocketException時にのみ強制的に切断用リストに入れる
@@ -248,10 +256,10 @@ namespace LiveServer
                                 Console.WriteLine(e.ToString());
                             }
                         }
-
-                    
                     }
-                    catch(IOException){}
+                    catch (IOException)
+                    {
+                    }
                     catch (OperationCanceledException)
                     {
                         Console.WriteLine("ReceiveLoop : Task Canceled");
@@ -260,8 +268,6 @@ namespace LiveServer
                     {
                         Console.WriteLine(e.ToString());
                     }
-                 
-                    
                 }
             }, source.Token);
         }

@@ -22,6 +22,7 @@ namespace LiveCoreLibrary
 
         public event Action OnConnected;
         public event Action OnDisconnected;
+        public event Action OnClose;
 
         /// <summary>
         /// This Constructor must call by main thread
@@ -38,7 +39,7 @@ namespace LiveCoreLibrary
         /// <param name="host"></param>
         /// <param name="port"></param>
         /// <returns></returns>
-        public async Task ConnectAsync(string host, int port)
+        public async Task<bool> ConnectAsync(string host, int port)
         {
             if (client == null || IsConnected)
             {
@@ -47,30 +48,43 @@ namespace LiveCoreLibrary
                 client = new TcpClient();
             }
 
-            await client.ConnectAsync(host, port);
-            cts = new CancellationTokenSource();
-            OnConnected?.Invoke();
-        }
-
-        /// <summary>
-        /// 非同期接続
-        /// </summary>
-        /// <param name="host"></param>
-        /// <param name="port"></param>
-        /// <returns></returns>
-        public async Task ConnectAsync(IPAddress host, int port)
-        {
-            if (client == null || IsConnected)
+            try
             {
-                Close();
-                await Task.Delay(100);
-                client = new TcpClient();
+                await client.ConnectAsync(host, port);
+                cts = new CancellationTokenSource();
+                OnConnected?.Invoke();
+                return true;
             }
-
-            await client.ConnectAsync(host, port);
-            cts = new CancellationTokenSource();
-            OnConnected?.Invoke();
+            catch (SocketException)
+            {
+                return false;
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                return false;
+            }
         }
+        //
+        // /// <summary>
+        // /// 非同期接続
+        // /// </summary>
+        // /// <param name="host"></param>
+        // /// <param name="port"></param>
+        // /// <returns></returns>
+        // public async Task ConnectAsync(IPAddress host, int port)
+        // {
+        //     if (client == null || IsConnected)
+        //     {
+        //         Close();
+        //         await Task.Delay(100);
+        //         client = new TcpClient();
+        //     }
+        //
+        //     await client.ConnectAsync(host, port);
+        //     cts = new CancellationTokenSource();
+        //     OnConnected?.Invoke();
+        // }
 
         /// <summary>
         /// 非同期送信
@@ -115,19 +129,17 @@ namespace LiveCoreLibrary
         /// </summary>
         public void ReceiveStart(int interval)
         {
-             
             //受信関数キャンセル用のトークンの作成
-            CancellationTokenSource source = new CancellationTokenSource();
-            cts = source;
-            Task.Run( async () =>
+         
+            Task.Run(async () =>
             {
                 while (true)
                 {
                     try
                     {
                         // 受信用関数の停止
-                        if (source.IsCancellationRequested) return;
-                        
+                        if (cts.IsCancellationRequested) return;
+
                         // クライアントがCloseしていた場合
                         if (!client.Connected)
                         {
@@ -153,7 +165,7 @@ namespace LiveCoreLibrary
                         await using MemoryStream mStream = new MemoryStream();
                         byte[] buffer = new byte[256];
                         int i;
-                        while ((i = await nStream.ReadAsync(buffer, 0, buffer.Length, source.Token)) > 0)
+                        while ((i = await nStream.ReadAsync(buffer, 0, buffer.Length, cts.Token)) > 0)
                         {
                             // Indexが0ならreturn
                             if (i == 0)
@@ -163,7 +175,7 @@ namespace LiveCoreLibrary
                             }
 
                             // ストリームに書き込み
-                            await mStream.WriteAsync(buffer, 0, i, source.Token);
+                            await mStream.WriteAsync(buffer, 0, i, cts.Token);
 
                             // Null文字を受信時終了
                             if ((char)buffer[i - 1] == '\0') break;
@@ -177,10 +189,14 @@ namespace LiveCoreLibrary
                             //if (client.Connected && MessageParser.CheckProtocol(dist))
                         {
                             var command = MessageParser.Decode(dist);
-                            OnMessageReceived?.Invoke(new (command, client, dist.Length));
+                            OnMessageReceived?.Invoke(new(command, client, dist.Length));
                         }
-
-
+                    }
+                    catch (IOException e)
+                    {
+                        // リモートホストからの切断
+                        OnDisconnected?.Invoke();
+                        return;
                     }
                     catch (SocketException e)
                     {
@@ -195,7 +211,7 @@ namespace LiveCoreLibrary
                         Console.WriteLine(e.ToString());
                     }
                 }
-            }, source.Token);
+            }, cts.Token);
         }
 
 
@@ -241,7 +257,7 @@ namespace LiveCoreLibrary
         {
             ReceiveStop();
             client?.Close();
-            OnDisconnected?.Invoke();
+            OnClose?.Invoke();
         }
 
 

@@ -19,7 +19,7 @@ namespace LiveServer
             server.AcceptLoop(100);
             server.HealthCheck(100);
             server.ReceiveLoop(10);
-            
+
             server.OnMessageReceived += async (args) =>
             {
                 try
@@ -28,16 +28,13 @@ namespace LiveServer
                     // var tcp = args.Item2; 
                     switch (data)
                     {
-                        case Join x:
-                            break;
-                        case Remove x:
-                            break;
                         case ChatMessage x:
-                            Console.WriteLine($"{x.Id.ToString()} : {x.Message}");
+                            Console.WriteLine($"[CLIENT]{x.Message} ({x.Id.ToString()})");
                             foreach (var client in holder.GetClients())
                             {
                                 await client.Client.SendAsync(MessageParser.Encode(x), SocketFlags.None);
                             }
+
                             break;
                     }
                 }

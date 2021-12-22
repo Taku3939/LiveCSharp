@@ -13,37 +13,29 @@ namespace ChatClient
 
         private static async Task Main(string[] args)
         {
+            // クライアントインスタンスの作成
             _client = new Client();
-            await _client.ConnectAsync(host, port);
 
-            //チャットを受け取ったときのイベント登録
-            _client.OnMessageReceived += (args) =>
-            {
-                
-                switch (args.Command)
-                {
-                    case Join x:
-                        Console.WriteLine(x._content);
-                        break;
-                    case Remove x:
-                        break;
-                    case ChatMessage x:
-                        Console.WriteLine($"{x.Id.ToString()} : {x.Message}");
-                        break;
-                    default:
-                        break;
-                }
-            };
+            //イベント登録
+            _client.OnMessageReceived += OnMessageReceived;
+            _client.OnConnected += OnConnected;
+            _client.OnDisconnected += OnDisconnected;
+            
+            // 接続するまで待機
+            while (!await _client.ConnectAsync(host, port)) { Console.Write("..."); }
+            Console.WriteLine(); //　改行
 
-            //受信開始
-            _client.ReceiveStart(100);
             Console.WriteLine("名前を入力してください...");
             var name = Console.ReadLine();
             var id = new Random().Next();
             Console.WriteLine("メッセージを入力してください...");
             while (true)
             {
-               
+                if (!_client.IsConnected)
+                {
+                    Console.WriteLine("接続が切れたので終了処理を行います");
+                    break;
+                }
                 var r = Console.ReadLine();
                 if (r == "quit") break;
                 ICommand m = new ChatMessage((ulong) id, $"{name} : {r}");
@@ -53,5 +45,29 @@ namespace ChatClient
             _client.Close();
             Console.WriteLine("終了します.");
         }
+
+        private static void OnMessageReceived(Data data)
+        {
+            switch (data.Command)
+            {
+                case ChatMessage x:
+                    Console.WriteLine($"[{x.Id.ToString()}]{x.Message}");
+                    break;
+                default:
+                    break;
+            }
+        }
+        private static void OnConnected()
+        {
+            //受信開始
+            Console.WriteLine($"{host}:[{port.ToString()}] connect");
+            _client.ReceiveStart(100);
+        }
+
+        private static void OnDisconnected()
+        {
+            Console.WriteLine($"{host}:[{port.ToString()}] disconnect");
+        }
+        
     }
 }
