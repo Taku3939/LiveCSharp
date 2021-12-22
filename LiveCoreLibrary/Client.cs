@@ -1,12 +1,10 @@
 using System;
-using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 using LiveCoreLibrary.Commands;
-using MessagePack;
 
 namespace LiveCoreLibrary
 {
@@ -65,26 +63,14 @@ namespace LiveCoreLibrary
                 return false;
             }
         }
-        //
-        // /// <summary>
-        // /// 非同期接続
-        // /// </summary>
-        // /// <param name="host"></param>
-        // /// <param name="port"></param>
-        // /// <returns></returns>
-        // public async Task ConnectAsync(IPAddress host, int port)
-        // {
-        //     if (client == null || IsConnected)
-        //     {
-        //         Close();
-        //         await Task.Delay(100);
-        //         client = new TcpClient();
-        //     }
-        //
-        //     await client.ConnectAsync(host, port);
-        //     cts = new CancellationTokenSource();
-        //     OnConnected?.Invoke();
-        // }
+
+        /// <summary>
+        /// 非同期接続
+        /// </summary>
+        /// <param name="host"></param>
+        /// <param name="port"></param>
+        /// <returns></returns>
+        public async Task<bool> ConnectAsync(IPAddress host, int port) => await ConnectAsync(host.ToString(), port);
 
         /// <summary>
         /// 非同期送信
@@ -130,7 +116,7 @@ namespace LiveCoreLibrary
         public void ReceiveStart(int interval)
         {
             //受信関数キャンセル用のトークンの作成
-         
+
             Task.Run(async () =>
             {
                 while (true)

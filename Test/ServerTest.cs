@@ -1,4 +1,5 @@
 using System;
+using System.Net;
 using System.Net.Sockets;
 using System.Threading.Tasks;
 using LiveCoreLibrary;
@@ -106,7 +107,7 @@ namespace Test
                 flag = true;
             };
             //接続要求
-            await client.ConnectAsync(Host, Port);
+            await client.ConnectAsync(IPAddress.Parse(Host), Port);
 
             //受信用ループの開始
             client.ReceiveStart(1000);

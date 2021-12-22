@@ -1,9 +1,5 @@
 ﻿using System;
-using System.Diagnostics;
-using System.Net.Sockets;
-using LiveCoreLibrary;
 using LiveCoreLibrary.Commands;
-using MessagePack;
 
 namespace LiveServer
 {
@@ -19,22 +15,17 @@ namespace LiveServer
             server.AcceptLoop(100);
             server.HealthCheck(100);
             server.ReceiveLoop(10);
-
-            server.OnMessageReceived += async (args) =>
+            ChatHub chatHub = new ChatHub(holder);
+            
+            server.OnMessageReceived += data =>
             {
                 try
                 {
-                    var data = args.Command;
-                    // var tcp = args.Item2; 
-                    switch (data)
+                    var cmd = data.Command;
+                    switch (cmd)
                     {
                         case ChatMessage x:
-                            Console.WriteLine($"[CLIENT]{x.Message} ({x.Id.ToString()})");
-                            foreach (var client in holder.GetClients())
-                            {
-                                await client.Client.SendAsync(MessageParser.Encode(x), SocketFlags.None);
-                            }
-
+                            chatHub.OnMessageReceived(x);
                             break;
                     }
                 }
