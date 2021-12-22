@@ -1,48 +1,56 @@
 ﻿using System;
 using System.Threading.Tasks;
 using LiveCoreLibrary;
-using MessagePack;
+using LiveCoreLibrary.Commands;
 
 namespace ChatClient
 {
-    class Program
+    static class Program
     {
-        private static Client client;
+        private static Client _client;
         private static string host = "localhost";
         private static int port = 30000;
 
         private static async Task Main(string[] args)
         {
-            client = new Client();
-            await client.ConnectAsync(host, port);
+            _client = new Client();
+            await _client.ConnectAsync(host, port);
 
             //チャットを受け取ったときのイベント登録
-            client.OnMessageReceived += (args) =>
+            _client.OnMessageReceived += (args) =>
             {
-                var body = MessageParser.Decode(args.Item2, out var rest);
-                switch(rest.rest) 
+                
+                switch (args.Command)
                 {
-                    case "/c/send":
-                        Console.WriteLine(MessagePackSerializer.Deserialize<ChatMessage>(body).Message);
+                    case Join x:
+                        Console.WriteLine(x._content);
                         break;
-                };
+                    case Remove x:
+                        break;
+                    case ChatMessage x:
+                        Console.WriteLine($"{x.Id.ToString()} : {x.Message}");
+                        break;
+                    default:
+                        break;
+                }
             };
 
             //受信開始
-            client.ReceiveStart(100);
+            _client.ReceiveStart(100);
             Console.WriteLine("名前を入力してください...");
             var name = Console.ReadLine();
+            var id = new Random().Next();
+            Console.WriteLine("メッセージを入力してください...");
             while (true)
             {
-                Console.WriteLine("メッセージを入力してください...");
+               
                 var r = Console.ReadLine();
                 if (r == "quit") break;
-                var m = new ChatMessage((ulong) new Random().Next(), $"{name} : {r}");
-                var buffer = MessageParser.Encode("/c/send", m);
-                client.SendAsync(buffer);
+                ICommand m = new ChatMessage((ulong) id, $"{name} : {r}");
+                _client.SendAsync(m);
             }
 
-            client.Close();
+            _client.Close();
             Console.WriteLine("終了します.");
         }
     }

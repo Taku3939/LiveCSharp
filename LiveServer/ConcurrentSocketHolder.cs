@@ -8,15 +8,15 @@ namespace LiveServer
     /// </summary>
     public class ConcurrentSocketHolder : ISocketHolder
     {
-        private readonly object lockObject = new object();
+        private readonly object _lockObject = new object();
         private readonly List<TcpClient> _clients = new List<TcpClient>();
-        private List<TcpClient> copy = new List<TcpClient>();
+        private List<TcpClient> _copy = new List<TcpClient>();
         
         public List<TcpClient> GetClients()
         {
-            lock (lockObject)
+            lock (_lockObject)
             {
-                return copy;
+                return _copy;
             }
         }
         
@@ -29,13 +29,13 @@ namespace LiveServer
             foreach (var c in _clients)
                 newList.Add(c);
             
-            this.copy = newList;
+            this._copy = newList;
         }
 
         
         public void Add(TcpClient client)
         {
-            lock (lockObject)
+            lock (_lockObject)
             {
                 if(!this._clients.Contains(client))
                     this._clients.Add(client);
@@ -50,7 +50,7 @@ namespace LiveServer
         /// <param name="client"></param>
         public void Remove(TcpClient client)
         {
-            lock (lockObject)
+            lock (_lockObject)
             {
                 this._clients.Remove(client);
                 CopyList();

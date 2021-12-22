@@ -6,6 +6,7 @@ using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 using LiveCoreLibrary;
+using LiveCoreLibrary.Commands;
 
 namespace LiveServer
 {
@@ -18,8 +19,8 @@ namespace LiveServer
         private readonly ISocketHolder _holder;
         private readonly List<CancellationTokenSource> _sources;
 
-        public event Action<Tuple<MessageType, byte[], TcpClient>> OnMessageReceived;
-        
+        public event Action<Data> OnMessageReceived;
+
         /// <summary>
         /// コンストラクタ
         /// </summary>
@@ -120,11 +121,12 @@ namespace LiveServer
                         foreach (var task in tasks)
                         {
                             var client = task.Result;
-                            var remoteEndPoint = (IPEndPoint) client.Client.RemoteEndPoint;
+                            var remoteEndPoint = (IPEndPoint)client.Client.RemoteEndPoint;
                             _holder.Add(client);
 #if DEBUG
-                            Console.WriteLine($"Connected: [No name] " +
-                                              $"({remoteEndPoint.Address}: {remoteEndPoint.Port})");
+                            if (remoteEndPoint != null)
+                                Console.WriteLine($"Connected: [No name] " +
+                                                  $"({remoteEndPoint.Address}: {remoteEndPoint.Port})");
                             Console.WriteLine("client count is " + _holder.GetClients().Count);
 #endif
                         }
@@ -151,6 +153,7 @@ namespace LiveServer
         /// <param name="interval"></param>
         public void ReceiveLoop(int interval)
         {
+            //受信関数キャンセル用のトークンの作成
             CancellationTokenSource source = new CancellationTokenSource();
             _sources.Add(source);
             Task.Run(async () =>
@@ -159,75 +162,106 @@ namespace LiveServer
                 {
                     try
                     {
+                        // 受信用関数の停止
                         if (source.IsCancellationRequested) return;
+
+                        //　クライアントの取得
                         var clients = _holder.GetClients();
 
+                        // エラー時のクライアント削除用リスト
                         Queue<TcpClient> rmCl = new Queue<TcpClient>();
+
+                        List<Task> receiveEvents = new List<Task>();
+                        //　クライアントごとに処理を行う
                         foreach (var client in clients)
                         {
-                            while (client.Available != 0 && client.Connected)
+                            try
                             {
-                                NetworkStream nStream = client.GetStream();
-                                if (!nStream.CanRead)
+                                // クライアントがCloseしていた場合
+                                if (!client.Connected)
                                 {
-                                    Console.WriteLine("Can not read");
-                                    return;
+                                    if (rmCl.Contains(client)) rmCl.Enqueue(client);
+                                    break;
                                 }
 
-                                var _ = Task.Run(async () =>
+                                // 利用可能なデータが存在しない場合
+                                //if (client.Available != 0) break;
+
+
+                                // ネットワークストリームの取得
+                                NetworkStream nStream = client.GetStream();
+
+                                if (!nStream.CanRead)
                                 {
-                                    await using MemoryStream mStream = new MemoryStream();
-                                    if (!mStream.CanRead) return;
+                                    Console.WriteLine(
+                                        $"WARNING >> {client.Client.RemoteEndPoint} : Can not read this NetworkStream");
+                                    break;
+                                }
+                                
+                                // メモリストリーム上に受信したデータの書き込み
+                                // ※ 受信データに制限を設けていない
+                                await using MemoryStream mStream = new MemoryStream();
+                           
+                                while (nStream.DataAvailable)
+                                {
                                     byte[] buffer = new byte[256];
-                                    CancellationTokenSource cts = new CancellationTokenSource();
-                                    try
+                                    int i;
+                                    while ((i = nStream.Read(buffer, 0, buffer.Length)) > 0)
                                     {
-                                        if (!client.Connected)
+                                        // ストリームに書き込み
+                                        await mStream.WriteAsync(buffer, 0, i, source.Token);
+
+                                        // Null文字を受信時終了
+                                        if ((char)buffer[i - 1] == '\0') break;
+                                    }
+
+                                    // Null文字を除いた受信データの取り出し
+                                    byte[] dist = mStream.ToArray();
+                                    receiveEvents.Add(Task.Run(() =>
+                                    {
+                                        //　イベント関数のコール
+                                        if (client.Connected)
+                                            //if (client.Connected && MessageParser.CheckProtocol(dist))
                                         {
-                                            if (rmCl.Contains(client)) rmCl.Enqueue(client);
-                                            return;
+                                            var command = MessageParser.Decode(dist);
+                                            OnMessageReceived?.Invoke(new (command, client, dist.Length));
                                         }
-                                        
-                                        int dataSize = await nStream.ReadAsync(buffer, 0, buffer.Length, cts.Token);
-                                        if (dataSize < 5) return;
-                                        byte[] dist = new byte[dataSize];
-                                        Buffer.BlockCopy(buffer, 0, dist, 0, dataSize);
-                                        if (client.Connected && MessageParser.CheckProtocol(dist))
-                                        {
-                                            var type = MessageParser.DecodeType(dist);
-                                            OnMessageReceived?.Invoke(
-                                                new Tuple<MessageType, byte[], TcpClient>(type, dist, client));
-                                        }
-                                    }
-                                    catch (OperationCanceledException)
-                                    {
-                                        Console.WriteLine("Task Canceled");
-                                    }
-                                    catch (SocketException)
-                                    {
-                                        if (rmCl.Contains(client)) rmCl.Enqueue(client);
-                                        cts.Cancel();
-                                    }
-                                    catch (Exception e)
-                                    {
-                                        Console.WriteLine(e.ToString());
-                                    }
-                                }, source.Token);
+                                    }, source.Token));
+                                    
+                                }
+                                
+                                //受信時のイベントを実行
+                                // ※ とりあえずawaitしているが消すべきかな？
+                                await Task.WhenAll(receiveEvents);
+                                await Task.Delay(interval, source.Token);
+                                
+                            }
+                            catch(IOException){}
+                            catch (SocketException e)
+                            {
+                                // SocketException時にのみ強制的に切断用リストに入れる
+                                if (rmCl.Contains(client)) rmCl.Enqueue(client);
+                                Console.WriteLine(e.ToString());
+                            }
+                            catch (Exception e)
+                            {
+                                Console.WriteLine(e.ToString());
                             }
                         }
 
-                        if(rmCl.Count > 0)
-                            _holder.Remove(rmCl.Dequeue());
-                        await Task.Delay(interval, source.Token);
+                    
                     }
+                    catch(IOException){}
                     catch (OperationCanceledException)
                     {
-                        Console.WriteLine("Task Canceled");
+                        Console.WriteLine("ReceiveLoop : Task Canceled");
                     }
                     catch (Exception e)
                     {
                         Console.WriteLine(e.ToString());
                     }
+                 
+                    
                 }
             }, source.Token);
         }

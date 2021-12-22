@@ -144,8 +144,9 @@
         //register event
         client.OnMessageReceived += (args) =>
         {
-            var body = MessageParser.Decode(args.Item2, out var rest);
-            if (rest.rest == "/m/get") OnReceived(MessagePackSerializer.Deserialize<MusicValue>(body));
+            //var body = MessageParser.Decode(args.Item2, out var rest);
+
+            //if (rest.rest == "/m/get") OnReceived(MessagePackSerializer.Deserialize<MusicValue>(body));
 
         };
     }
@@ -157,7 +158,7 @@
     private void Publish()
     {
         if (!client.IsConnected) return;
-        client.SendAsync("/m/set",new SetMusicValue(year, month, day, hour, minute, seconds));
+        //client.SendAsync("/m/set",new SetMusicValue(year, month, day, hour, minute, seconds));
     }
 
     /// <summary>
@@ -181,7 +182,8 @@
     {
         if (!client.IsConnected) return;
 
-        client.SendAsync(MessageParser.Encode("/m/get", new LiveCoreLibrary.Unit(), MethodType.Get));
+       
+        //client.SendAsync(MessageParser.Encode("/m/get", new LiveCoreLibrary.Unit(), MethodType.Get));
     }
 
 }

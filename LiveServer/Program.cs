@@ -1,11 +1,13 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Net.Sockets;
-using System.Threading.Tasks;
 using LiveCoreLibrary;
+using LiveCoreLibrary.Commands;
+using MessagePack;
 
 namespace LiveServer
 {
-    class Program
+    static class Program
     {
         const int Port = 30000;
 
@@ -17,35 +19,26 @@ namespace LiveServer
             server.AcceptLoop(100);
             server.HealthCheck(100);
             server.ReceiveLoop(10);
-
-            var hub = new MusicHub(holder);
+            
             server.OnMessageReceived += async (args) =>
             {
                 try
                 {
-                    var body = MessageParser.Decode(args.Item2, out var rest);
-                    switch (rest.rest)
+                    var data = args.Command;
+                    // var tcp = args.Item2; 
+                    switch (data)
                     {
-                        case REST.MUSIC_SET_VALUE:
-                            hub.SetTime(MessageParser.DecodeBody<SetMusicValue>(body));
+                        case Join x:
                             break;
-
-                        // case "/m/update":
-                        //     hub.UpdateTime(MessageParser.DecodeBody<MusicValue>(body));
-                        //     break;
-
-                        case REST.MUSIC_GET_VALUE:
-                            hub.GetTime(args.Item3);
+                        case Remove x:
                             break;
-                        
-                        default:
+                        case ChatMessage x:
+                            Console.WriteLine($"{x.Id.ToString()} : {x.Message}");
+                            foreach (var client in holder.GetClients())
+                            {
+                                await client.Client.SendAsync(MessageParser.Encode(x), SocketFlags.None);
+                            }
                             break;
-                    }
-
-                    if (rest.methodType == MethodType.Post)
-                    {
-                        foreach (var client in holder.GetClients())
-                            await client.Client.SendAsync(args.Item2, SocketFlags.None);
                     }
                 }
                 catch (Exception e)
