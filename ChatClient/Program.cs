@@ -62,6 +62,7 @@ namespace ChatClient
         {
             //受信開始
             Console.WriteLine($"{host}:[{port.ToString()}] connect");
+            Console.WriteLine("--------------");
             _client.ReceiveStart(100);
         }
 
