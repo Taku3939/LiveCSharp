@@ -53,6 +53,7 @@ namespace LiveServer
             lock (_lockObject)
             {
                 this._clients.Remove(client);
+                client.Close();
                 CopyList();
             }
         }

@@ -164,11 +164,11 @@
     /// <summary>
     /// Call this method when it receives a message from the server
     /// </summary>
-    private void OnReceived(MusicValue value)
+    private void OnReceived()
     {
-        var total = TimeSpan.FromMilliseconds(value.StartTimeCode);
+        //var total = TimeSpan.FromMilliseconds(value.StartTimeCode);
 
-        currentTime = new DateTime(1970, 1, 1) + total;
+        //currentTime = new DateTime(1970, 1, 1) + total;
     //received status render 
         this.StateHasChanged();
         client.Close();

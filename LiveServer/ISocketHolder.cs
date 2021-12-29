@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Net.Sockets;
 
@@ -6,7 +7,7 @@ namespace LiveServer
     public interface ISocketHolder
     {
         List<TcpClient> GetClients();
-        void Add(TcpClient client);
-        void Remove(TcpClient client);
+        public void Add(TcpClient client);
+        public void Remove(TcpClient client);
     }
 }

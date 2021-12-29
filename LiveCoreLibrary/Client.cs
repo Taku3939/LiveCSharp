@@ -1,7 +1,9 @@
 using System;
 using System.IO;
 using System.Net;
+using System.Net.Security;
 using System.Net.Sockets;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
 using LiveCoreLibrary.Commands;
@@ -16,12 +18,11 @@ namespace LiveCoreLibrary
         private CancellationTokenSource cts;
         private readonly SynchronizationContext _context;
 
-        public event Action<Data> OnMessageReceived;
+        public event Action<ReceiveData> OnMessageReceived;
 
         public event Action OnConnected;
         public event Action OnDisconnected;
         public event Action OnClose;
-
         /// <summary>
         /// This Constructor must call by main thread
         /// </summary>
@@ -76,27 +77,24 @@ namespace LiveCoreLibrary
         /// 非同期送信
         /// </summary>
         /// <param name="cmd">MessagePack Object</param>
-        public void SendAsync(ICommand cmd)
+        public void SendAsync(ITcpCommand cmd)
         {
             var data = MessageParser.Encode(cmd);
+            
             if (!client.Connected)
             {
                 Console.WriteLine("ClientがCloseしています");
                 return;
             }
 
-            var sArgs = new SocketAsyncEventArgs();
-            sArgs.SetBuffer(data, 0, data.Length);
-            // tokenって何だろうわからん後で考えとけ
-            //sArgs.UserToken = data;
-            client.Client.SendAsync(sArgs);
+            SendAsync(data);
         }
 
         /// <summary>
         /// 非同期送信
         /// </summary>
         /// <param name="serialize">byte array</param>
-        public void SendAsync(byte[] serialize)
+        private void SendAsync(byte[] serialize)
         {
             if (!client.Connected)
             {
@@ -106,8 +104,10 @@ namespace LiveCoreLibrary
 
             var sArgs = new SocketAsyncEventArgs();
             sArgs.SetBuffer(serialize, 0, serialize.Length);
-            sArgs.UserToken = serialize;
+            // tokenって何だろうわからん後で考えとけ
+            //sArgs.UserToken = data;
             client.Client.SendAsync(sArgs);
+
         }
 
         /// <summary>
@@ -133,7 +133,7 @@ namespace LiveCoreLibrary
                         }
 
                         // 利用可能なデータが存在しない場合
-                        if (client.Available != 0) return;
+                        if (client.Available != 0) continue;
 
 
                         // ネットワークストリームの取得
@@ -141,17 +141,15 @@ namespace LiveCoreLibrary
 
                         if (!nStream.CanRead)
                         {
-                            Console.WriteLine(
-                                $"WARNING >> {client.Client.RemoteEndPoint} : Can not read this NetworkStream");
-                            return;
+                            Console.WriteLine($"WARNING >> {client.Client.RemoteEndPoint} : Can not read this NetworkStream");
+                            continue;
                         }
-
                         // メモリストリーム上に受信したデータの書き込み
                         // ※ 受信データに制限を設けていない
-                        await using MemoryStream mStream = new MemoryStream();
                         byte[] buffer = new byte[256];
                         int i;
-                        while ((i = await nStream.ReadAsync(buffer, 0, buffer.Length, cts.Token)) > 0)
+                        await using MemoryStream mStream = new MemoryStream();
+                        while ((i = await nStream.ReadAsync(buffer, 0, buffer.Length)) > 0)
                         {
                             // Indexが0ならreturn
                             if (i == 0)
@@ -166,10 +164,12 @@ namespace LiveCoreLibrary
                             // Null文字を受信時終了
                             if ((char)buffer[i - 1] == '\0') break;
                         }
-
+                        
                         // Null文字を除いた受信データの取り出し
                         byte[] dist = mStream.ToArray();
 
+                        //test
+                        if(dist.Length < 5) Console.WriteLine("サイズが小さすぎる");
                         //　イベント関数のコール
                         if (client.Connected)
                             //if (client.Connected && MessageParser.CheckProtocol(dist))
@@ -177,8 +177,10 @@ namespace LiveCoreLibrary
                             var command = MessageParser.Decode(dist);
                             OnMessageReceived?.Invoke(new(command, client, dist.Length));
                         }
+
+                        await Task.Delay(interval);
                     }
-                    catch (IOException e)
+                    catch (IOException)
                     {
                         // リモートホストからの切断
                         OnDisconnected?.Invoke();
@@ -199,7 +201,6 @@ namespace LiveCoreLibrary
                 }
             }, cts.Token);
         }
-
 
         /// <summary>
         /// 受信停止

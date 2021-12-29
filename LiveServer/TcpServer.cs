@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
@@ -13,20 +15,19 @@ namespace LiveServer
     /// <summary>
     /// Serverクラス
     /// </summary>
-    public class Server
+    public class TcpServer : IObservable<ReceiveData>
     {
         private readonly TcpListener _listener;
         private readonly ISocketHolder _holder;
         private readonly List<CancellationTokenSource> _sources;
-
-        public event Action<Data> OnMessageReceived;
-        
+        private readonly List<IObserver<ReceiveData>> _observers = new ();
+        private readonly ConcurrentQueue<ReceiveData> _messageQueue = new ();
         /// <summary>
         /// コンストラクタ
         /// </summary>
         /// <param name="port">ポート</param>
         /// <param name="socketHolder">TcpClientを保持するISocketHolderを実装したクラス</param>
-        public Server(int port, ISocketHolder socketHolder)
+        public TcpServer(int port, ISocketHolder socketHolder)
         {
             _holder = socketHolder;
             _sources = new List<CancellationTokenSource>();
@@ -55,19 +56,20 @@ namespace LiveServer
                         if (source.IsCancellationRequested) return;
                         var clients = _holder.GetClients();
                         List<TcpClient> removeList = new List<TcpClient>();
+                        
+                        // 削除用リストに追加
                         foreach (var client in clients)
                             if (!IsConnected(client.Client))
                                 removeList.Add(client);
-
+                        
                         foreach (var client in removeList)
                         {
                             if (client.Client.RemoteEndPoint is IPEndPoint remoteEndPoint)
                                 Console.WriteLine(
                                     $"[SERVER]{IPAddress.Parse(remoteEndPoint.Address.ToString())}: {remoteEndPoint.Port.ToString()} DISCONNECT");
+                            
+                            // Close and Remove
                             _holder.Remove(client);
-
-                            //Close処理
-                            client.Close();
                         }
 
                         await Task.Delay(interval, source.Token);
@@ -125,7 +127,7 @@ namespace LiveServer
                         }
 
                         await Task.WhenAll(tasks);
-
+                        
                         foreach (var task in tasks)
                         {
                             var client = task.Result;
@@ -156,7 +158,7 @@ namespace LiveServer
 
         /// <summary>
         /// 受信用ループ
-        /// 受信したデータを全てのクライアントに送信します
+        /// 受信したデータをキューにぶち込みます
         /// </summary>
         /// <param name="interval"></param>
         public void ReceiveLoop(int interval)
@@ -189,13 +191,8 @@ namespace LiveServer
                                 if (!client.Connected)
                                 {
                                     if (rmCl.Contains(client)) rmCl.Enqueue(client);
-                                    break;
+                                    continue;
                                 }
-
-                                // 利用可能なデータが存在しない場合
-                                //if (client.Available != 0) break;
-
-
                                 // ネットワークストリームの取得
                                 NetworkStream nStream = client.GetStream();
 
@@ -203,7 +200,7 @@ namespace LiveServer
                                 {
                                     Console.WriteLine(
                                         $"WARNING >> {client.Client.RemoteEndPoint} : Can not read this NetworkStream");
-                                    break;
+                                    continue;
                                 }
 
                                 // メモリストリーム上に受信したデータの書き込み
@@ -214,7 +211,7 @@ namespace LiveServer
                                 {
                                     byte[] buffer = new byte[256];
                                     int i;
-                                    while ((i = nStream.Read(buffer, 0, buffer.Length)) > 0)
+                                    while ((i = await nStream.ReadAsync(buffer, 0, buffer.Length, source.Token)) > 0)
                                     {
                                         // ストリームに書き込み
                                         await mStream.WriteAsync(buffer, 0, i, source.Token);
@@ -228,11 +225,11 @@ namespace LiveServer
                                     receiveEvents.Add(Task.Run(() =>
                                     {
                                         //　イベント関数のコール
-                                        if (client.Connected)
+                                        if (client.Connected) 
                                             //if (client.Connected && MessageParser.CheckProtocol(dist))
                                         {
                                             var command = MessageParser.Decode(dist);
-                                            OnMessageReceived?.Invoke(new(command, client, dist.Length));
+                                            _messageQueue.Enqueue(new(command, client, dist.Length));
                                         }
                                     }, source.Token));
                                 }
@@ -273,6 +270,30 @@ namespace LiveServer
         }
 
 
+        public void Process(int interval)
+        {
+            Task.Run(async () =>
+            {
+                while (true)
+                {
+                    while (!_messageQueue.IsEmpty)
+                    {
+                        if (!_messageQueue.TryDequeue(out var data))
+                            continue;
+                        
+                        // 受信データの並列実行
+                        _observers
+                            .AsParallel()
+                            .WithDegreeOfParallelism(Environment.ProcessorCount)
+                            .ForAll(x => x.OnNext(data));
+                    }
+
+                    await Task.Delay(interval);
+                }
+            });
+
+        }
+        
         /// <summary>
         /// 終了
         /// </summary>
@@ -284,8 +305,18 @@ namespace LiveServer
 
             //クライアントごとのclose
             var clients = _holder.GetClients();
-            foreach (var c in clients)
-                c.Close();
+            foreach (var c in clients) c.Close();
+        }
+        
+        /// <summary>
+        /// オブザーバーのコレクションを保持します。
+        /// </summary>
+    
+        public IDisposable Subscribe(IObserver<ReceiveData> observer)
+        {
+            _observers.Add(observer);
+            var dispose = new NotifyDispose<ReceiveData>(_observers, observer);
+            return dispose;
         }
     }
 }

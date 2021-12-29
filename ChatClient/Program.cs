@@ -39,7 +39,7 @@ namespace ChatClient
                 }
                 var r = Console.ReadLine();
                 if (r == "quit") break;
-                ICommand m = new ChatMessage((ulong) id, $"{name} : {r}");
+                ITcpCommand m = new ChatPacket((ulong) id, $"{name} : {r}");
                 _client.SendAsync(m);
             }
 
@@ -47,11 +47,11 @@ namespace ChatClient
             Console.WriteLine("終了します.");
         }
 
-        private static void OnMessageReceived(Data data)
+        private static void OnMessageReceived(ReceiveData receiveData)
         {
-            switch (data.Command)
+            switch (receiveData.TcpCommand)
             {
-                case ChatMessage x:
+                case ChatPacket x:
                     Console.WriteLine($"[{x.Id.ToString()}]{x.Message}");
                     break;
                 default:

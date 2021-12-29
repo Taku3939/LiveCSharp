@@ -1,3 +1,4 @@
+## .Net5使うなら変えないとね
 FROM mcr.microsoft.com/dotnet/core/sdk:3.1 as builder
 COPY ./LiveServer /app/LiveServer
 COPY ./LiveCoreLibrary /app/LiveCoreLibrary
