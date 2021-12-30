@@ -8,7 +8,6 @@ using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 using LiveCoreLibrary;
-using LiveCoreLibrary.Commands;
 
 namespace LiveServer
 {
@@ -59,9 +58,11 @@ namespace LiveServer
                         
                         // 削除用リストに追加
                         foreach (var client in clients)
+                        {
                             if (!IsConnected(client.Client))
                                 removeList.Add(client);
-                        
+                        }
+
                         foreach (var client in removeList)
                         {
                             if (client.Client.RemoteEndPoint is IPEndPoint remoteEndPoint)
@@ -98,8 +99,9 @@ namespace LiveServer
             {
                 return !(socket.Poll(1, SelectMode.SelectRead) && socket.Available == 0);
             }
-            catch (SocketException)
+            catch (SocketException e)
             {
+                Console.WriteLine(e);
                 return false;
             }
         }
@@ -239,8 +241,9 @@ namespace LiveServer
                                 await Task.WhenAll(receiveEvents);
                                 await Task.Delay(interval, source.Token);
                             }
-                            catch (IOException)
+                            catch (IOException e)
                             {
+                                Console.WriteLine(e);
                             }
                             catch (SocketException e)
                             {
@@ -254,8 +257,8 @@ namespace LiveServer
                             }
                         }
                     }
-                    catch (IOException)
-                    {
+                    catch (IOException e)
+                    { Console.WriteLine(e);
                     }
                     catch (OperationCanceledException)
                     {

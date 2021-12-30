@@ -8,42 +8,49 @@ namespace ChatClient
 {
     static class Program
     {
-        private static Client _client;
+        private static Tcp _tcp;
         private static string host = "localhost";
         private static int port = 30000;
 
+        private static string roomName = "Test";
         private static async Task Main(string[] args)
         {
             // クライアントインスタンスの作成
-            _client = new Client();
+            _tcp = new Tcp();
 
             //イベント登録
-            _client.OnMessageReceived += OnMessageReceived;
-            _client.OnConnected += OnConnected;
-            _client.OnDisconnected += OnDisconnected;
+            _tcp.OnMessageReceived += OnMessageReceived;
+            _tcp.OnConnected += OnConnected;
+            _tcp.OnDisconnected += OnDisconnected;
             
             // 接続するまで待機
-            while (!await _client.ConnectAsync(host, port)) { Console.Write("..."); }
+            while (!await _tcp.ConnectAsync(host, port)) { Console.Write("..."); }
             Console.WriteLine(); //　改行
-
+            await Task.Delay(1000);
             Console.WriteLine("名前を入力してください...");
             var name = Console.ReadLine();
-            var id = new Random().Next();
-            Console.WriteLine("メッセージを入力してください...");
+            var id = Guid.NewGuid();
+         
+            Join join = new Join(id, roomName);
+            _tcp.SendAsync(join);
+            var r = Console.ReadLine();
+        
+            ITcpCommand m = new ChatPacket(id, $"{name} : {r}");
+          
             while (true)
             {
-                if (!_client.IsConnected)
+                if (!_tcp.IsConnected)
                 {
                     Console.WriteLine("接続が切れたので終了処理を行います");
                     break;
                 }
-                var r = Console.ReadLine();
-                if (r == "quit") break;
-                ITcpCommand m = new ChatPacket((ulong) id, $"{name} : {r}");
-                _client.SendAsync(m);
+
+                _tcp.SendAsync(m);
+
+                await Task.Delay(1000);
             }
 
-            _client.Close();
+            _tcp.Close();
             Console.WriteLine("終了します.");
         }
 
@@ -63,7 +70,7 @@ namespace ChatClient
             //受信開始
             Console.WriteLine($"{host}:[{port.ToString()}] connect");
             Console.WriteLine("--------------");
-            _client.ReceiveStart(100);
+            _tcp.ReceiveStart(100);
         }
 
         private static void OnDisconnected()

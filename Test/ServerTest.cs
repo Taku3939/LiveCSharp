@@ -164,12 +164,12 @@ namespace Test
             //メッセージを受信できたなかった時のためのフラグ
             bool flag = false;
 
-            Client client = new Client();
+            Tcp tcp = new Tcp();
             //クライアントの接続時のコード (クライアント側)
-            client.OnConnected += () => _testOutputHelper.WriteLine("Connected : client");
+            tcp.OnConnected += () => _testOutputHelper.WriteLine("Connected : client");
 
             //受信時のイベントを追加する
-            client.OnMessageReceived += (e) =>
+            tcp.OnMessageReceived += (e) =>
             {
                 _testOutputHelper.WriteLine($"Received {e.Length.ToString()}bytes : Server -> Client");
                 var data = e.TcpCommand as ChatPacket;
@@ -179,12 +179,12 @@ namespace Test
                 flag = true;
             };
             //接続要求
-            await client.ConnectAsync(IPAddress.Parse(Host), Port);
+            await tcp.ConnectAsync(IPAddress.Parse(Host), Port);
 
             //受信用ループの開始
-            client.ReceiveStart(10);
+            tcp.ReceiveStart(10);
 
-            client.SendAsync(message);
+            tcp.SendAsync(message);
             _testOutputHelper.WriteLine($"Send : Client -> Server");
 
 
@@ -193,7 +193,7 @@ namespace Test
 
             //メッセージを受信できたどうかの確認
             Assert.True(flag);
-            client.Close();
+            tcp.Close();
             tcpServer.Close();
 
             #endregion

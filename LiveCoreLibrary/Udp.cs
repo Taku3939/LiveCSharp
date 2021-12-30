@@ -15,9 +15,11 @@ namespace LiveCoreLibrary
         private readonly ConcurrentQueue<byte[]> _bufferPool;
 
         private CancellationTokenSource _cts;
-        private EndPointPacketHolder _p2PClients;
+    
         private IPEndPoint _endPoint;
 
+
+        public event Action<IUdpCommand> OnMessageReceived;
         private Guid UserId;
 
         public Udp(Guid userId, IPEndPoint endPoint)
@@ -70,25 +72,14 @@ namespace LiveCoreLibrary
                     try
                     {
                         if (_cts.IsCancellationRequested) return;
-                        
+
                         // サーバーからのp2pリストの更新
                         while (_bufferPool.Count > 0)
                         {
                             if (_bufferPool.TryDequeue(out var buffer))
                             {
                                 var command = MessagePackSerializer.Deserialize<IUdpCommand>(buffer);
-                                switch (command)
-                                {
-                                    case EndPointPacketHolder x:
-                                        _p2PClients = x;
-                                        break;
-                                    case EndPointPacket x:
-                                        Console.WriteLine("Address : " + x.Address);
-                                        break;
-                                    case PositionPacket x:
-                                        Console.WriteLine("Id : " + x.Id);
-                                        break;
-                                }
+                                OnMessageReceived?.Invoke(command);
                             }
                         }
 
@@ -103,23 +94,23 @@ namespace LiveCoreLibrary
         }
 
 
-        public async Task SendClients(IUdpCommand tcpCommand)
+        public async Task SendClients(IUdpCommand tcpCommand, EndPointPacketHolder p2PClients)
         {
             try
             {
                 // メッセージのシリアライズ
                 var data = MessagePackSerializer.Serialize(tcpCommand);
                 // 送信先が存在しない場合
-                if (_p2PClients == null) return;
+                if (p2PClients == null) return;
 
                 // クライントごとに送信処理
-                foreach (var udpEndPoint in _p2PClients.EndPointPackets)
+                foreach (var udpEndPoint in p2PClients.EndPointPackets)
                 {
                     // 自分のエンドポイントを取得
-                    var endPoint = _udp.Client.LocalEndPoint as IPEndPoint;
                     // 自分以外に送信
-                    if (udpEndPoint.Port != endPoint.Port)
+                    if (_udp.Client.LocalEndPoint is IPEndPoint endPoint && udpEndPoint.Port != endPoint.Port)
                     {
+                        Console.WriteLine(udpEndPoint.Port);
                         await _udp.SendAsync(data, data.Length, udpEndPoint.Address, udpEndPoint.Port);
                     }
                 }
@@ -134,6 +125,7 @@ namespace LiveCoreLibrary
         {
             return _udp.Client.LocalEndPoint as IPEndPoint;
         }
+
         public async Task SendServer(IUdpCommand c)
         {
             try

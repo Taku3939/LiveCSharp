@@ -1,4 +1,7 @@
-﻿using System.Net.Sockets;
+﻿#nullable enable
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Net.Sockets;
 
 namespace LiveServer
 {
@@ -19,6 +22,29 @@ namespace LiveServer
             {
                 return false;
             }
+        }
+    }
+    public static class ConcurrentDictionaryEx
+    {
+        public static List<TValue> Others<TKey, TValue>(this ConcurrentDictionary<TKey, TValue> dictionary, TKey key) where TKey : notnull
+        {
+            List<TValue> results = new List<TValue>();
+            foreach (var keyValuePair in dictionary)
+            {
+                TKey t = keyValuePair.Key;
+                // struct is boxing
+                if (!t.Equals(key)) { results.Add(keyValuePair.Value); } 
+            }
+
+            return results;
+        }
+
+        public static TValue? Get<TKey, TValue>(this ConcurrentDictionary<TKey, TValue> dictionary, TKey key)
+            where TKey : notnull
+            where TValue :  class
+        {
+            if (dictionary.TryGetValue(key, out var value))  return value;
+            return null;
         }
     }
 }

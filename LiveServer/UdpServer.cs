@@ -45,17 +45,13 @@ namespace LiveServer
                         while (_udp.Available > 0)
                         {
                             UdpReceiveResult res = await _udp.ReceiveAsync();
-                            var endPoint = res.RemoteEndPoint as IPEndPoint;
-                            // Console.WriteLine("a ; " + endPoint.Address);
-                            // Console.WriteLine("a ; " + endPoint.Port);
+                            var endPoint = res.RemoteEndPoint;
 
-                            var udpEndPoint =
-                                (EndPointPacket)MessagePackSerializer.Deserialize<IUdpCommand>(res.Buffer);
-                            // Console.WriteLine("a ; " + udpEndPoint.Address);
-                            // Console.WriteLine("a ; " + udpEndPoint.Port);
                             //新しいクライアントがいたら増やす
-                            _endPointPackets.Enqueue(new EndPointPacket(udpEndPoint.Guid, endPoint.Address.ToString(),
-                                endPoint.Port));
+                            if (MessagePackSerializer.Deserialize<IUdpCommand>(res.Buffer) is HolePunchingPacket holePunchingPacket)
+                                _endPointPackets.Enqueue(new EndPointPacket(holePunchingPacket.UserId,
+                                    endPoint.Address.ToString(),
+                                    endPoint.Port));
                         }
                     }
                     catch (MessagePackSerializationException)
@@ -95,42 +91,6 @@ namespace LiveServer
         {
             return await _udp.SendAsync(buf, buf.Length, new IPEndPoint(IPAddress.Parse(address), port));
         }
-        // public void SendLoop(int interval)
-        // {
-        //     Task.Run(async () =>
-        //     {
-        //         while (true)
-        //         {
-        //             try
-        //             {
-        //                 if (_cts.IsCancellationRequested) return;
-        //                 //var users = _socketHolder.GetEndPointList();
-        //                  while (_remoteEndPoints.Count > 0)
-        //                  {
-        //                      // 非同期処理を並列実行
-        //                      await Task.WhenAll(
-        //                              _remoteEndPoints
-        //                                  .AsParallel()
-        //                                  .WithDegreeOfParallelism(Environment.ProcessorCount)
-        //                                  .Select(async x =>
-        //                                  {
-        //                                      ICommand cmd = new EndPointPacketHolder(_remoteEndPoints.ToArray());
-        //                                      var buf = MessagePackSerializer.Serialize(cmd);
-        //                                      return await _udp.SendAsync(buf, buf.Length, new IPEndPoint(IPAddress.Parse(x.Address),x.Port));
-        //                                  }));
-        //                  }
-        //
-        //                 await Task.Delay(interval);
-        //             }
-        //             catch (Exception e)
-        //             {
-        //                 Console.WriteLine(e);
-        //                 throw;
-        //             }
-        //         }
-        //     }, _cts.Token);
-        // }
-
 
         public IDisposable Subscribe(IObserver<EndPointPacket> observer)
         {

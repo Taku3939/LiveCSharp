@@ -6,22 +6,24 @@ namespace LiveCoreLibrary.Commands
     [MessagePackObject]
     public class Join : ITcpCommand
     {
-        [Key(0)] public Guid Guid { get; }
+        [Key(0)] public Guid UserId { get; }
 
-        public Join(Guid guid)
+        [Key(1)] public string RoomName { get; }
+        public Join(Guid userId, string roomName)
         {
-            this.Guid = guid;
+            this.UserId = userId;
+            this.RoomName = roomName;
         }
     }
 
     [MessagePackObject]
     public class Leave : ITcpCommand
     {
-        [Key(0)] public Guid Guid { get; }
+        [Key(0)] public Guid UserId { get; }
 
-        public Leave(Guid guid)
+        public Leave(Guid userId)
         {
-            this.Guid = guid;
+            this.UserId = userId;
         }
     }
 }

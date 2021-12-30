@@ -25,7 +25,7 @@
 <table>
     <p>host: @host</p>
     <p>port: @port</p>
-    <p>Connection Status: @client.IsConnected.ToString()</p>
+    <p>Connection Status: @_tcp.IsConnected.ToString()</p>
     <p>StartTimeCode : @currentTime.Year 年 @currentTime.Month 月 @currentTime.Day 日 @currentTime.Hour 時 @currentTime.Minute 分 @currentTime.Second 秒</p>
 </table>
 
@@ -124,13 +124,13 @@
     private string port;
     private int year, month, day, hour, minute, seconds;
 
-    private readonly Client client;
+    private readonly Tcp _tcp;
     private DateTime currentTime = DateTime.MaxValue;
     private int y, h;
 
     public MainConsole()
     {
-        client = new Client();
+        _tcp = new Tcp();
     }
 
     /// <summary>
@@ -138,11 +138,11 @@
     /// </summary>
     private async Task Connect()
     {
-        await client.ConnectAsync(host, int.Parse(port));
-        client.ReceiveStart(100);
-        client.HealthCheck(100);
+        await _tcp.ConnectAsync(host, int.Parse(port));
+        _tcp.ReceiveStart(100);
+        _tcp.HealthCheck(100);
         //register event
-        client.OnMessageReceived += (args) =>
+        _tcp.OnMessageReceived += (args) =>
         {
             //var body = MessageParser.Decode(args.Item2, out var rest);
 
@@ -157,7 +157,7 @@
     /// </summary>
     private void Publish()
     {
-        if (!client.IsConnected) return;
+        if (!_tcp.IsConnected) return;
         //client.SendAsync("/m/set",new SetMusicValue(year, month, day, hour, minute, seconds));
     }
 
@@ -171,7 +171,7 @@
         //currentTime = new DateTime(1970, 1, 1) + total;
     //received status render 
         this.StateHasChanged();
-        client.Close();
+        _tcp.Close();
         this.StateHasChanged();
     }
 
@@ -180,7 +180,7 @@
     /// </summary>
     private void Update()
     {
-        if (!client.IsConnected) return;
+        if (!_tcp.IsConnected) return;
 
        
         //client.SendAsync(MessageParser.Encode("/m/get", new LiveCoreLibrary.Unit(), MethodType.Get));

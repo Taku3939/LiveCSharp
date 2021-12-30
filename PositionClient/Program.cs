@@ -9,41 +9,45 @@ namespace PositionClient
 {
     class Program
     {
-        private static Client tcp;
+        private static Tcp _tcp;
         private static string host = "localhost";
         private static int port = 30000;
         private static int udpPort = 7000;
-
+        private static EndPointPacketHolder _p2PClients;
+        private static string roomName = "Test";
         private static async Task Main(string[] args)
         {
             // 適当なIDの生成
-            Guid guid = Guid.NewGuid();
+            Guid userId = Guid.NewGuid();
 
             // クライアントインスタンスの作成
-            tcp = new Client();
+            _tcp = new Tcp();
 
             //イベント登録
-            tcp.OnMessageReceived += OnMessageReceived;
-            tcp.OnConnected += OnConnected;
-            tcp.OnDisconnected += OnDisconnected;
+            _tcp.OnMessageReceived += OnMessageReceived;
+            _tcp.OnConnected += OnConnected;
+            _tcp.OnDisconnected += OnDisconnected;
 
             // 接続するまで待機
-            while (!await tcp.ConnectAsync(host, port)) Console.Write("...");
+            while (!await _tcp.ConnectAsync(host, port)) Console.Write("...");
 
             Console.WriteLine(); //　改行
 
-            // Udpの開始
-            Udp udp = new Udp(guid, new IPEndPoint(IPAddress.Parse("127.0.0.1"), udpPort));
+            // // Udpの開始
+            Udp udp = new Udp(userId, new IPEndPoint(IPAddress.Parse("127.0.0.1"), udpPort));
             udp.ReceiveLoop(10);
             udp.Process(10);
 
+            udp.OnMessageReceived += OnMessageReceivedOfUdp;
+            
             Console.WriteLine("udp通信を開始します");
-
-            ITcpCommand join = new Join(guid);
-
+            await Task.Delay(1000);
+            ITcpCommand join = new Join(userId,roomName);
+            _tcp.SendAsync(join);
+            ITcpCommand chat = new ChatPacket(userId, "uouo");
             while (true)
             {
-                if (!tcp.IsConnected)
+                if (!_tcp.IsConnected)
                 {
                     Console.WriteLine("接続が切れたので終了処理を行います");
                     break;
@@ -51,17 +55,19 @@ namespace PositionClient
                 // var r = Console.ReadLine();
                 // if (r == "quit") break;
 
-                var endPoint = udp.GetEndPoint();
-                IUdpCommand command = new PositionPacket(guid, 0, 0, 0, 0, 0, 0,0);
-                IUdpCommand endPointPacket = new EndPointPacket(guid, endPoint.Address.ToString(), endPoint.Port);
-                tcp.SendAsync(join);
+             
+                IUdpCommand command = new PositionPacket(userId, 0, 0, 0, 0, 0, 0,0);
+                IUdpCommand endPointPacket = new HolePunchingPacket(userId);
+              
+                _tcp.SendAsync(chat);
+                
                 await udp.SendServer(endPointPacket);
-                await udp.SendClients(command);
-                await Task.Delay(1000);
+                if(_p2PClients != null)await udp.SendClients(command, _p2PClients);
+                await Task.Delay(2000);
             }
 
             udp.Close();
-            tcp.Close();
+            _tcp.Close();
             Console.WriteLine("終了します.");
         }
 
@@ -69,6 +75,9 @@ namespace PositionClient
         {
             switch (receiveData.TcpCommand)
             {
+                case EndPointPacketHolder x:
+                    _p2PClients = x;
+                    break;
                 case ChatPacket x:
                     Console.WriteLine($"[{x.Id.ToString()}]{x.Message}");
                     break;
@@ -77,12 +86,27 @@ namespace PositionClient
             }
         }
 
+
+        public static void OnMessageReceivedOfUdp(IUdpCommand command)
+        {
+            switch (command)
+            {
+                // case EndPointPacketHolder x:
+                //     _p2PClients = x;
+                //     break;
+                    //Console.WriteLine("Address : " + x.Address);
+                    //break;
+                case PositionPacket x:
+                    Console.WriteLine("Id : " + x.Id);
+                    break;
+            }
+        }
         private static void OnConnected()
         {
             //受信開始
             Console.WriteLine($"{host}:[{port.ToString()}] connect");
             Console.WriteLine("--------------");
-            tcp.ReceiveStart(100);
+            _tcp.ReceiveStart(100);
         }
 
         private static void OnDisconnected()
