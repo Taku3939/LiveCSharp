@@ -1,13 +1,13 @@
 ﻿using System;
-using LiveCoreLibrary;
-using LiveCoreLibrary.Commands;
+
+using LiveServer.Sample;
 
 namespace LiveServer
 {
-    static class Program
+    static class Entry
     {
-        private const int TcpPort = 30000;
-        private const int UdpPort = 7000;
+        private const int TcpPort = 25565;
+        private const int UdpPort = 25501;
 
         private static void Main(string[] args)
         {

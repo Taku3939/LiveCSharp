@@ -26,4 +26,29 @@ namespace LiveCoreLibrary.Commands
             this.UserId = userId;
         }
     }
+    
+    /// <summary>
+    /// 
+    /// </summary>
+    public class JoinResult : ITcpCommand
+    {
+        [Key(0)] public Guid UserId;
+        public JoinResult(Guid userId)
+        {
+            this.UserId = userId;
+        }
+    }
+    
+    /// <summary>
+    /// 
+    /// </summary>
+    public class LeaveResult : ITcpCommand
+    {
+        [Key(0)] public Guid UserId;
+        
+        public LeaveResult(Guid userId)
+        {
+            this.UserId = userId;
+        }
+    }
 }

@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Net.Sockets;
-using System.Reflection.Emit;
 using System.Threading.Tasks;
 using LiveCoreLibrary;
 using LiveCoreLibrary.Commands;
@@ -80,21 +78,23 @@ namespace LiveServer
         {
             try
             {
+                if (Clients == null) return;
+           
                 // Null check
                 var data = MessageParser.Encode(tcpCommand);
-                //ParallelQuery<Task<int>> tasks;
-                List<Task<int>> tasks = new List<Task<int>>();
+                ParallelQuery<Task<int>> tasks;
+                //List<Task<int>> tasks = new List<Task<int>>();
                 lock (_lockObject)
                 {
-                    foreach (var socketData in Clients)
-                    {
-                        var task = socketData.tcpClient.Client.SendAsync(data, SocketFlags.None);
-                        tasks.Add(task);
-                    }
-                    // tasks = _clients
-                    //     .AsParallel()
-                    //     .WithDegreeOfParallelism(Environment.ProcessorCount)
-                    //     .Select(x => x.tcpClient.Client.SendAsync(data, SocketFlags.None));
+                    // foreach (var socketData in Clients)
+                    // {
+                    //     var task = socketData.tcpClient.Client.SendAsync(data, SocketFlags.None);
+                    //     tasks.Add(task);
+                    // }
+                    tasks = Clients
+                        .AsParallel()
+                        .WithDegreeOfParallelism(Environment.ProcessorCount)
+                        .Select(x => x.tcpClient.Client.SendAsync(data, SocketFlags.None));
                 }
 
                 //一応まつ

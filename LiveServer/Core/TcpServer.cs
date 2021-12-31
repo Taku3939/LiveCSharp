@@ -8,6 +8,7 @@ using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 using LiveCoreLibrary;
+using LiveCoreLibrary.Utility;
 
 namespace LiveServer
 {
@@ -59,8 +60,12 @@ namespace LiveServer
                         // 削除用リストに追加
                         foreach (var client in clients)
                         {
-                            if (!IsConnected(client.Client))
+
+                            if (!client.Connected)
+                            {
                                 removeList.Add(client);
+                            }
+                              
                         }
 
                         foreach (var client in removeList)
@@ -100,6 +105,11 @@ namespace LiveServer
                 return !(socket.Poll(1, SelectMode.SelectRead) && socket.Available == 0);
             }
             catch (SocketException e)
+            {
+                Console.WriteLine(e);
+                return false;
+            }
+            catch (Exception e)
             {
                 Console.WriteLine(e);
                 return false;
@@ -258,7 +268,8 @@ namespace LiveServer
                         }
                     }
                     catch (IOException e)
-                    { Console.WriteLine(e);
+                    { 
+                        Console.WriteLine(e);
                     }
                     catch (OperationCanceledException)
                     {
@@ -279,16 +290,25 @@ namespace LiveServer
             {
                 while (true)
                 {
-                    while (!_messageQueue.IsEmpty)
+                    try
                     {
-                        if (!_messageQueue.TryDequeue(out var data))
-                            continue;
-                        
-                        // 受信データの並列実行
-                        _observers
-                            .AsParallel()
-                            .WithDegreeOfParallelism(Environment.ProcessorCount)
-                            .ForAll(x => x.OnNext(data));
+
+
+                        while (!_messageQueue.IsEmpty)
+                        {
+                            if (!_messageQueue.TryDequeue(out var data))
+                                continue;
+
+                            // 受信データの並列実行
+                            _observers
+                                .AsParallel()
+                                .WithDegreeOfParallelism(Environment.ProcessorCount)
+                                .ForAll(x => x.OnNext(data));
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine(e);
                     }
 
                     await Task.Delay(interval);
@@ -302,6 +322,7 @@ namespace LiveServer
         /// </summary>
         public void Close()
         {
+            Console.WriteLine("hogehgeohgoehgoehg");
             //全てのループの終了
             foreach (var cancellationTokenSource in _sources)
                 cancellationTokenSource.Cancel();

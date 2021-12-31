@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace LiveServer
+namespace LiveCoreLibrary.Utility
 {
     public class NotifyDispose<T> : IDisposable
     {

@@ -1,15 +1,9 @@
-﻿#nullable enable
-using System;
+﻿using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net;
 using System.Net.Sockets;
-using System.Threading;
-using System.Threading.Tasks;
-using LiveCoreLibrary;
+
 using LiveCoreLibrary.Commands;
-using MessagePack;
 
 namespace LiveServer
 {
@@ -19,7 +13,7 @@ namespace LiveServer
 
         public readonly string Name;
         public readonly ConcurrentDictionary<Guid, SocketData> SocketHolder;
-        protected SocketData[] Clients;
+        protected SocketData[] Clients = null;
 
 
         public event Action<Guid> OnJoin;

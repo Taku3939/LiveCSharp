@@ -1,14 +1,12 @@
 using System;
 using System.IO;
 using System.Net;
-using System.Net.Security;
 using System.Net.Sockets;
-using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
 using LiveCoreLibrary.Commands;
 
-namespace LiveCoreLibrary
+namespace LiveCoreLibrary.Client
 {
     public class Tcp
     {
@@ -20,7 +18,7 @@ namespace LiveCoreLibrary
 
         public event Action<ReceiveData> OnMessageReceived;
 
-        public event Action OnConnected;
+        public event Action<IPEndPoint> OnConnected;
         public event Action OnDisconnected;
         public event Action OnClose;
 
@@ -52,7 +50,7 @@ namespace LiveCoreLibrary
             {
                 await client.ConnectAsync(host, port);
                 cts = new CancellationTokenSource();
-                OnConnected?.Invoke();
+                OnConnected?.Invoke(new IPEndPoint(IPAddress.Parse(host), port));
                 return true;
             }
             catch (SocketException)
@@ -177,8 +175,8 @@ namespace LiveCoreLibrary
                     {
                         // リモートホストからの切断
                         Console.WriteLine(e);
-                        OnDisconnected?.Invoke();
-                        return;
+                        //OnDisconnected?.Invoke();
+                        //return;
                     }
                     catch (SocketException e)
                     {
@@ -236,6 +234,7 @@ namespace LiveCoreLibrary
         /// </summary>
         public void Close()
         {
+            Console.WriteLine("-----------------");
             ReceiveStop();
             client?.Close();
             OnClose?.Invoke();

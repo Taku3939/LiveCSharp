@@ -7,7 +7,9 @@ namespace LiveCoreLibrary.Commands
     [Union(0, typeof(ChatPacket))]
     [Union(1, typeof(Join))]
     [Union(2, typeof(Leave))]
-    [Union(3, typeof(EndPointPacketHolder))]
+    [Union(3, typeof(JoinResult))]
+    [Union(4, typeof(LeaveResult))]
+    [Union(5, typeof(EndPointPacketHolder))]
     public interface ITcpCommand { }
 
     [Union(0, typeof(PositionPacket))]

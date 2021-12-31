@@ -4,7 +4,7 @@ using MessagePack;
 namespace LiveCoreLibrary.Commands
 {
     [MessagePackObject]
-    public struct PositionPacket : IUdpCommand
+    public class PositionPacket : IUdpCommand
     {
         [Key(0)] public readonly Guid Id;
         [Key(1)] public readonly float X;
@@ -27,17 +27,4 @@ namespace LiveCoreLibrary.Commands
             Qw = qw;
         }
     }
-
-    // [MessagePackObject]
-    // public class PositionPacketHolder: IUdpCommand
-    // {
-    //     [Key(0)] public readonly ulong Id;
-    //     [Key(1)] public readonly PositionPacket[] PositionPackets;
-    //
-    //     public PositionPacketHolder(ulong id, PositionPacket[] positionPackets)
-    //     {
-    //         this.Id = id;
-    //         this.PositionPackets = positionPackets;
-    //     }
-    // }
 }

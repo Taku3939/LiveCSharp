@@ -3,7 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Net.Sockets;
 
-namespace LiveServer
+namespace LiveCoreLibrary.Utility
 {
     public static class Util
     {
@@ -24,16 +24,21 @@ namespace LiveServer
             }
         }
     }
+
     public static class ConcurrentDictionaryEx
     {
-        public static List<TValue> Others<TKey, TValue>(this ConcurrentDictionary<TKey, TValue> dictionary, TKey key) where TKey : notnull
+        public static List<TValue> Others<TKey, TValue>(this ConcurrentDictionary<TKey, TValue> dictionary, TKey key)
+            where TKey : notnull
         {
             List<TValue> results = new List<TValue>();
             foreach (var keyValuePair in dictionary)
             {
                 TKey t = keyValuePair.Key;
                 // struct is boxing
-                if (!t.Equals(key)) { results.Add(keyValuePair.Value); } 
+                if (!t.Equals(key))
+                {
+                    results.Add(keyValuePair.Value);
+                }
             }
 
             return results;
@@ -41,9 +46,9 @@ namespace LiveServer
 
         public static TValue? Get<TKey, TValue>(this ConcurrentDictionary<TKey, TValue> dictionary, TKey key)
             where TKey : notnull
-            where TValue :  class
+            where TValue : class
         {
-            if (dictionary.TryGetValue(key, out var value))  return value;
+            if (dictionary.TryGetValue(key, out var value)) return value;
             return null;
         }
     }

@@ -10,7 +10,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AdminConsole", "AdminConsol
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Test", "Test\Test.csproj", "{9D14AEC4-770D-40B9-892B-67E344CBC7E0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PositionClient", "PositionClient\PositionClient.csproj", "{25FDC7BB-0975-4E27-A89D-C1BF9921058F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LiveClient", "LiveClient\LiveClient.csproj", "{25FDC7BB-0975-4E27-A89D-C1BF9921058F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

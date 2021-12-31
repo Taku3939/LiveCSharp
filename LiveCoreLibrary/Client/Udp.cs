@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using LiveCoreLibrary.Commands;
 using MessagePack;
 
-namespace LiveCoreLibrary
+namespace LiveCoreLibrary.Client
 {
     public class Udp
     {
@@ -30,9 +30,11 @@ namespace LiveCoreLibrary
 
             _endPoint = endPoint;
             // //適当なデータを送信
-            var ping = new EndPointPacket(userId, endPoint.Address.ToString(), endPoint.Port);
+            // これいらんかも
+            IUdpCommand ping = new HolePunchingPacket(userId);
             var pingBuf = MessagePackSerializer.Serialize(ping);
             _udp.Client.SendTo(pingBuf, endPoint);
+            
             _bufferPool = new ConcurrentQueue<byte[]>();
         }
 
@@ -94,12 +96,12 @@ namespace LiveCoreLibrary
         }
 
 
-        public async Task SendClients(IUdpCommand tcpCommand, EndPointPacketHolder p2PClients)
+        public async Task SendClients(IUdpCommand udpCommand, EndPointPacketHolder p2PClients)
         {
             try
             {
                 // メッセージのシリアライズ
-                var data = MessagePackSerializer.Serialize(tcpCommand);
+                var data = MessagePackSerializer.Serialize(udpCommand);
                 // 送信先が存在しない場合
                 if (p2PClients == null) return;
 
@@ -110,8 +112,10 @@ namespace LiveCoreLibrary
                     // 自分以外に送信
                     if (_udp.Client.LocalEndPoint is IPEndPoint endPoint && udpEndPoint.Port != endPoint.Port)
                     {
-                        Console.WriteLine(udpEndPoint.Port);
-                        await _udp.SendAsync(data, data.Length, udpEndPoint.Address, udpEndPoint.Port);
+
+                        string uo = udpEndPoint.Address;
+                        if (udpEndPoint.Address == "192.168.11.1") uo = "126.74.187.200";
+                        await _udp.SendAsync(data, data.Length, uo, udpEndPoint.Port);
                     }
                 }
             }

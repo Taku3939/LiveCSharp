@@ -7,6 +7,7 @@ using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 using LiveCoreLibrary.Commands;
+using LiveCoreLibrary.Utility;
 using MessagePack;
 
 namespace LiveServer
@@ -48,15 +49,17 @@ namespace LiveServer
                             var endPoint = res.RemoteEndPoint;
 
                             //新しいクライアントがいたら増やす
-                            if (MessagePackSerializer.Deserialize<IUdpCommand>(res.Buffer) is HolePunchingPacket holePunchingPacket)
-                                _endPointPackets.Enqueue(new EndPointPacket(holePunchingPacket.UserId,
+                            var message = MessagePackSerializer.Deserialize<IUdpCommand>(res.Buffer);
+                            if (message is HolePunchingPacket packet)
+                                _endPointPackets.Enqueue(new EndPointPacket(packet.UserId,
                                     endPoint.Address.ToString(),
                                     endPoint.Port));
                         }
                     }
-                    catch (MessagePackSerializationException)
+                    catch (MessagePackSerializationException e)
                     {
                         // ignore
+                        Console.WriteLine(e);
                     }
                     catch (SocketException e)
                     {
@@ -65,7 +68,11 @@ namespace LiveServer
                             Console.WriteLine(e.ToString());
                         return;
                     }
-
+                    catch (Exception e)
+                    {
+                        Console.WriteLine(e);
+                    }
+                    
                     await Task.Delay(interval);
                 }
             }, _cts.Token);
@@ -77,11 +84,19 @@ namespace LiveServer
             {
                 while (true)
                 {
-                    while (!_endPointPackets.IsEmpty)
-                        if (_endPointPackets.TryDequeue(out var data))
-                            foreach (var observer in _observers)
-                                observer.OnNext(data);
+                    try
+                    {
+                        while (!_endPointPackets.IsEmpty)
+                            if (_endPointPackets.TryDequeue(out var data))
+                                foreach (var observer in _observers)
+                                    observer.OnNext(data);
 
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine(e);
+                    }
+         
                     await Task.Delay(interval);
                 }
             }, _cts.Token);

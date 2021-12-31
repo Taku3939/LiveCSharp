@@ -30,7 +30,7 @@ namespace LiveCoreLibrary.Commands
     }
 
     [MessagePackObject]
-    public class EndPointPacketHolder : ITcpCommand
+    public class  EndPointPacketHolder : ITcpCommand
     {
         [Key(0)] public readonly EndPointPacket[] EndPointPackets;
 
