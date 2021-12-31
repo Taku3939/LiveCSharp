@@ -165,7 +165,7 @@ namespace LiveCoreLibrary.Client
                                 //if (client.Connected && MessageParser.CheckProtocol(dist))
                             {
                                 var command = MessageParser.Decode(dist);
-                                OnMessageReceived?.Invoke(new(command, client, dist.Length));
+                                OnMessageReceived?.Invoke(new(command, client));
                             }
                         }
 

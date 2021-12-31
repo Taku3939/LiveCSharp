@@ -119,7 +119,8 @@ namespace Test
                 switch (command)
                 {
                     case PositionPacket x:
-                        Assert.Equal(positionPacket, x);
+                        Assert.Equal(posPacket.Id, x.Id);
+                        Assert.Equal(posPacket.X, x.X);
                         break;
                     default:
                         // キャストに失敗した場合は強制的失敗

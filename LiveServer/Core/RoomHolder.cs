@@ -25,8 +25,13 @@ namespace LiveServer
 
                 case Leave x:
                     // すべての部屋に特定ユーザの退出命令
-                    foreach (var room in _rooms.Values)
+                    foreach (var room in _rooms.Values) 
                         room.Remove(x.UserId);
+                    break;
+                
+                case Disconnect:
+                    foreach (var room in _rooms.Values) 
+                        room.Remove(value.Client);
                     break;
             }
         }

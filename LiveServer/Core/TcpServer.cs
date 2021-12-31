@@ -8,6 +8,7 @@ using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 using LiveCoreLibrary;
+using LiveCoreLibrary.Commands;
 using LiveCoreLibrary.Utility;
 
 namespace LiveServer
@@ -20,8 +21,9 @@ namespace LiveServer
         private readonly TcpListener _listener;
         private readonly ISocketHolder _holder;
         private readonly List<CancellationTokenSource> _sources;
-        private readonly List<IObserver<ReceiveData>> _observers = new ();
-        private readonly ConcurrentQueue<ReceiveData> _messageQueue = new ();
+        private readonly List<IObserver<ReceiveData>> _observers = new();
+        private readonly ConcurrentQueue<ReceiveData> _messageQueue = new();
+
         /// <summary>
         /// コンストラクタ
         /// </summary>
@@ -56,24 +58,27 @@ namespace LiveServer
                         if (source.IsCancellationRequested) return;
                         var clients = _holder.GetClients();
                         List<TcpClient> removeList = new List<TcpClient>();
-                        
+
                         // 削除用リストに追加
                         foreach (var client in clients)
-                        {
-
                             if (!client.Connected)
-                            {
                                 removeList.Add(client);
-                            }
-                              
-                        }
+
 
                         foreach (var client in removeList)
                         {
                             if (client.Client.RemoteEndPoint is IPEndPoint remoteEndPoint)
                                 Console.WriteLine(
                                     $"[SERVER]{IPAddress.Parse(remoteEndPoint.Address.ToString())}: {remoteEndPoint.Port.ToString()} DISCONNECT");
-                            
+
+                            foreach (var o in _observers)
+                            {
+
+                                var disconnectUser = new Disconnect();
+                                o.OnNext(new ReceiveData(disconnectUser, client));
+
+                            }
+
                             // Close and Remove
                             _holder.Remove(client);
                         }
@@ -139,7 +144,7 @@ namespace LiveServer
                         }
 
                         await Task.WhenAll(tasks);
-                        
+
                         foreach (var task in tasks)
                         {
                             var client = task.Result;
@@ -205,6 +210,7 @@ namespace LiveServer
                                     if (rmCl.Contains(client)) rmCl.Enqueue(client);
                                     continue;
                                 }
+
                                 // ネットワークストリームの取得
                                 NetworkStream nStream = client.GetStream();
 
@@ -237,11 +243,11 @@ namespace LiveServer
                                     receiveEvents.Add(Task.Run(() =>
                                     {
                                         //　イベント関数のコール
-                                        if (client.Connected) 
+                                        if (client.Connected)
                                             //if (client.Connected && MessageParser.CheckProtocol(dist))
                                         {
                                             var command = MessageParser.Decode(dist);
-                                            _messageQueue.Enqueue(new(command, client, dist.Length));
+                                            _messageQueue.Enqueue(new(command, client));
                                         }
                                     }, source.Token));
                                 }
@@ -268,7 +274,7 @@ namespace LiveServer
                         }
                     }
                     catch (IOException e)
-                    { 
+                    {
                         Console.WriteLine(e);
                     }
                     catch (OperationCanceledException)
@@ -292,8 +298,6 @@ namespace LiveServer
                 {
                     try
                     {
-
-
                         while (!_messageQueue.IsEmpty)
                         {
                             if (!_messageQueue.TryDequeue(out var data))
@@ -314,9 +318,8 @@ namespace LiveServer
                     await Task.Delay(interval);
                 }
             });
-
         }
-        
+
         /// <summary>
         /// 終了
         /// </summary>
@@ -331,11 +334,10 @@ namespace LiveServer
             var clients = _holder.GetClients();
             foreach (var c in clients) c.Close();
         }
-        
+
         /// <summary>
         /// オブザーバーのコレクションを保持します。
         /// </summary>
-    
         public IDisposable Subscribe(IObserver<ReceiveData> observer)
         {
             _observers.Add(observer);

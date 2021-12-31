@@ -57,7 +57,6 @@ namespace LiveCoreLibrary.Client
                     catch (Exception e)
                     {
                         Console.WriteLine(e.ToString());
-                        return;
                     }
 
                     await Task.Delay(interval);

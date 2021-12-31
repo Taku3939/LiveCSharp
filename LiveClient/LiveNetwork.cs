@@ -107,7 +107,7 @@ namespace PositionClient
             _udp.OnMessageReceived += OnMessageReceivedOfUdp;
             await HolePunching();
         }
-        
+
         /// <summary>
         /// Close
         /// </summary>

@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Net.Sockets;
 using MessagePack;
 
 namespace LiveCoreLibrary.Commands
@@ -51,4 +53,9 @@ namespace LiveCoreLibrary.Commands
             this.UserId = userId;
         }
     }
+
+    /// <summary>
+    /// 送信できない
+    /// </summary>
+    public class Disconnect : ITcpCommand { }
 }

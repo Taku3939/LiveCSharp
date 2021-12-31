@@ -79,26 +79,25 @@ namespace LiveServer
             try
             {
                 if (Clients == null) return;
-           
+
                 // Null check
                 var data = MessageParser.Encode(tcpCommand);
                 ParallelQuery<Task<int>> tasks;
-                //List<Task<int>> tasks = new List<Task<int>>();
                 lock (_lockObject)
                 {
-                    // foreach (var socketData in Clients)
-                    // {
-                    //     var task = socketData.tcpClient.Client.SendAsync(data, SocketFlags.None);
-                    //     tasks.Add(task);
-                    // }
                     tasks = Clients
                         .AsParallel()
                         .WithDegreeOfParallelism(Environment.ProcessorCount)
+                        .Where(x => x.tcpClient is { Connected: true })
                         .Select(x => x.tcpClient.Client.SendAsync(data, SocketFlags.None));
                 }
 
                 //一応まつ
                 await Task.WhenAll(tasks);
+            }
+            catch (SocketException)
+            {
+                // ignore
             }
             catch (Exception e)
             {
@@ -133,10 +132,17 @@ namespace LiveServer
                             });
                 }
 
+                await Task.WhenAll(tasks);
+
             }
-            catch (Exception)
+            catch (SocketException e)
             {
-                // ignore
+                //ignore
+                //Console.WriteLine(e);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
             }
         }
     }

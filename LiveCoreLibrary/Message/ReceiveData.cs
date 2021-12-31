@@ -7,13 +7,12 @@ namespace LiveCoreLibrary
     {
         public ITcpCommand TcpCommand;
         public TcpClient Client;
-        public int Length;
-
-        public ReceiveData(ITcpCommand tcpCommand, TcpClient client, int length)
+     
+        public ReceiveData(ITcpCommand tcpCommand, TcpClient client)
         {
             this.TcpCommand = tcpCommand;
             this.Client = client;
-            this.Length = length;
+      
         }
     }
 }

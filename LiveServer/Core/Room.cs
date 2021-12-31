@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
-
+using LiveCoreLibrary.Client;
 using LiveCoreLibrary.Commands;
 
 namespace LiveServer
@@ -66,6 +67,27 @@ namespace LiveServer
                 OnLeave?.Invoke(guid);
             }
         }
+
+        /// <summary>
+        /// ルームからユーザの削除
+        /// </summary>
+        /// <param name="guid"></param>
+        public void Remove(TcpClient client)
+        {
+            foreach (var keyValuePair in SocketHolder)
+            {
+                if (keyValuePair.Value.tcpClient == client)
+                {
+                    var guid = keyValuePair.Key;
+                    OnLeave?.Invoke(guid);
+                    SocketHolder.TryRemove(guid, out var data);
+                    // リストの更新
+                    UpdateClient();
+                    break;
+                }
+            }
+        }
+
 
         
 
