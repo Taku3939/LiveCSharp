@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
+using System.Threading.Tasks;
 using LiveCoreLibrary.Client;
 using LiveCoreLibrary.Commands;
 
@@ -37,12 +38,14 @@ namespace LiveServer
         /// </summary>
         /// <param name="guid"></param>
         /// <param name="client"></param>
-        public void Add(Guid guid, TcpClient client)
+        public async void Add(Guid guid, TcpClient client)
         {
             if (SocketHolder.TryAdd(guid, new SocketData(guid, client, new EndPointPacket(guid, "", -1))))
             {
                 Console.WriteLine($"[SERVER]:id`{guid}` is join");
                 UpdateClient(); 
+                //wait 1s
+                await Task.Delay(1000);
                 OnJoin?.Invoke(guid);
             }
         }
@@ -52,7 +55,7 @@ namespace LiveServer
         /// ルームからユーザの削除
         /// </summary>
         /// <param name="guid"></param>
-        public void Remove(Guid guid)
+        public async void Remove(Guid guid)
         {
             if (SocketHolder.TryRemove(guid, out var socketData))
             {
@@ -63,7 +66,7 @@ namespace LiveServer
 
                 // リストの更新
                 UpdateClient();
-
+                await Task.Delay(1000);
                 OnLeave?.Invoke(guid);
             }
         }
@@ -72,17 +75,20 @@ namespace LiveServer
         /// ルームからユーザの削除
         /// </summary>
         /// <param name="guid"></param>
-        public void Remove(TcpClient client)
+        public async void Remove(TcpClient client)
         {
             foreach (var keyValuePair in SocketHolder)
             {
                 if (keyValuePair.Value.tcpClient == client)
                 {
                     var guid = keyValuePair.Key;
-                    OnLeave?.Invoke(guid);
                     SocketHolder.TryRemove(guid, out var data);
                     // リストの更新
                     UpdateClient();
+
+
+                    await Task.Delay(1000);
+                    OnLeave?.Invoke(guid);
                     break;
                 }
             }

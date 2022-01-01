@@ -1,15 +1,10 @@
 using System;
 using System.Collections.Generic;
-using System.Net;
-using System.Net.Sockets;
-using System.Threading.Tasks;
 using LiveCoreLibrary;
 using LiveCoreLibrary.Commands;
 using Xunit;
-using LiveServer;
 using MessagePack;
 using Xunit.Abstractions;
-using Xunit.Sdk;
 
 namespace Test
 {
@@ -69,8 +64,6 @@ namespace Test
             {
                 switch (command)
                 {
-                
-
                     case ChatPacket x:
                         Assert.Equal(id, x.Id);
                         Assert.Equal(message, x.Message);

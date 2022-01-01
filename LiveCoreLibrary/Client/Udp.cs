@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
@@ -103,18 +104,25 @@ namespace LiveCoreLibrary.Client
                 var data = MessagePackSerializer.Serialize(udpCommand);
                 // 送信先が存在しない場合
                 if (p2PClients == null) return;
-
+                if (_udp.Client == null) return;
                 // クライントごとに送信処理
                 foreach (var udpEndPoint in p2PClients.EndPointPackets)
                 {
                     // 自分のエンドポイントを取得
                     // 自分以外に送信
+
+                
                     if (_udp.Client.LocalEndPoint is IPEndPoint endPoint && udpEndPoint.Port != endPoint.Port)
                     {
+                        // あってるかは知らん
+                        if (!Utility.Util.IsConnected(_udp.Client))
+                        {
+                            return;
+                        }
 
-                        string uo = udpEndPoint.Address;
-                        if (udpEndPoint.Address == "192.168.11.1") uo = "126.74.187.200";
-                        await _udp.SendAsync(data, data.Length, uo, udpEndPoint.Port);
+                        string address = udpEndPoint.Address;
+                        // if (udpEndPoint.Address == "192.168.11.1") uo = "126.74.187.200";
+                        await _udp.SendAsync(data, data.Length, address, udpEndPoint.Port);
                     }
                 }
             }

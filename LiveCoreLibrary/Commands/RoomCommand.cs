@@ -29,9 +29,7 @@ namespace LiveCoreLibrary.Commands
         }
     }
     
-    /// <summary>
-    /// 
-    /// </summary>
+    [MessagePackObject]
     public class JoinResult : ITcpCommand
     {
         [Key(0)] public Guid UserId;
@@ -41,9 +39,7 @@ namespace LiveCoreLibrary.Commands
         }
     }
     
-    /// <summary>
-    /// 
-    /// </summary>
+    [MessagePackObject]
     public class LeaveResult : ITcpCommand
     {
         [Key(0)] public Guid UserId;
