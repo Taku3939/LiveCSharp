@@ -1,8 +1,9 @@
 # LiveCSharp
-This is Tcp rest API Server.
+This is p2p Server using tcp and udp protocol.
 ## Project info
 
  `./LiveServer`     : Server project for live <br>
+ `./LiveClient`     : Client that can communicate with p2p<br>
  `./ChatClient`     : Client that chat with multiple people.(Use test)<br>
  `./AdminConsole`   : WebClient to set playing time of live <br>
  `./Test`           : Test to see if the server works properly <br>
@@ -17,6 +18,12 @@ cd LiveServer
 dotnet run
 ```
 
+# client run
+
+```
+cd LiveClient
+dotnet run
+```
 
 ### server test
 
@@ -36,7 +43,7 @@ Build based on this [Dockerfile](https://github.com/Taku3939/LiveCSharp/blob/mas
 docker build -t "live-server" .
 ```
 
-if you set Github Actions, image auto generate and push container repository of Gcp based on this [cloudbuild.yml](https://github.com/MIKUEC2020/LiveCSharp/blob/master/cloudbuild.yml)
+if you set Github Actions, image auto generate and push container repository of Gcp based on this [cloudbuild.yml](https://github.com/Taku39339/LiveCSharp/blob/master/cloudbuild.yml)
 
 ### chat client run
 
