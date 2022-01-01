@@ -37,6 +37,12 @@ namespace PositionClient
                         break;
                 }
             };
+
+            LiveNetwork.Instance.OnJoin += async (id) =>
+            {
+                Console.WriteLine("join is " + id);
+                await LiveNetwork.Instance.HolePunching();
+            };
             await LiveNetwork.Instance.ConnectTcp(tcpHost, tcpPort);
             LiveNetwork.Instance.Join(userId, roomName);
             LiveNetwork.Instance.ConnectUdp(udpHost, udpPort);
@@ -45,7 +51,7 @@ namespace PositionClient
             {
                 await Position();
                 Chat("uouo");
-                await LiveNetwork.Instance.HolePunching();
+          
                 await Task.Delay(2000);
             }
         }

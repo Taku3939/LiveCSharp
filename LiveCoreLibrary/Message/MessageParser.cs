@@ -17,7 +17,7 @@ namespace LiveCoreLibrary
         }
         public static byte[] Encode(ITcpCommand cmd)
         {
-            string publicKey = ReadPublicKey();
+            //string publicKey = ReadPublicKey();
             
             var data = new MessageBuilder(cmd)
             //    .EncryptRsa(publicKey)
@@ -31,7 +31,7 @@ namespace LiveCoreLibrary
         public static ITcpCommand Decode(byte[] data)
         {
 
-            string privateKey = ReadPrivateKey();
+            //string privateKey = ReadPrivateKey();
             var command = new MessageBuilder(data)
                 .RemoveLastByte()
                 //.FromBase64()

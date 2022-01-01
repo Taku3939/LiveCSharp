@@ -22,6 +22,8 @@ namespace PositionClient
         public event Action OnConnected;
         public event Action<Guid> OnJoin;
         public event Action<Guid> OnLeave;
+
+        public event Action OnClose;
         private Guid _userId;
 
         /// <summary>
@@ -86,6 +88,7 @@ namespace PositionClient
             _tcp.OnMessageReceived += OnMessageReceived;
             _tcp.OnConnected += OnConnect;
             _tcp.OnDisconnected += OnDisconnected;
+            _tcp.OnClose += OnClose;
             // 接続するまで待機
             while (!await _tcp.ConnectAsync(host, port)) Console.Write("...");
             Console.WriteLine(); //　改行
@@ -121,6 +124,7 @@ namespace PositionClient
         }
         private void OnMessageReceived(ReceiveData receiveData)
         {
+            
             switch (receiveData.TcpCommand)
             {
                 case JoinResult x:
@@ -158,6 +162,13 @@ namespace PositionClient
 
         private void OnDisconnected()
         {
+            if (_tcp != null && _udp != null)
+            {
+                //_tcp.Close(); // 一応
+                _udp.Close();
+                
+                Console.WriteLine("一応Close");
+            } 
             Console.WriteLine($"[CLIENT]disconnect");
         }
     }

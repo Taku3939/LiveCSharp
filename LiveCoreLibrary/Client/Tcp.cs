@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.IO.Pipes;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
@@ -128,6 +129,7 @@ namespace LiveCoreLibrary.Client
                         if (!client.Connected)
                         {
                             //再接続できるようにしたいね
+                            Close();
                             return;
                         }
                         // ネットワークストリームの取得
@@ -166,6 +168,13 @@ namespace LiveCoreLibrary.Client
                             {
                                 var command = MessageParser.Decode(dist);
                                 OnMessageReceived?.Invoke(new(command, client));
+
+                                switch (command)
+                                {
+                                    case JoinResult x:
+                                        Console.WriteLine(x.UserId);
+                                        break;
+                                }
                             }
                         }
 
@@ -175,8 +184,8 @@ namespace LiveCoreLibrary.Client
                     {
                         // リモートホストからの切断
                         Console.WriteLine(e);
-                        //OnDisconnected?.Invoke();
-                        //return;
+                        Close();
+                        return;
                     }
                     catch (SocketException e)
                     {
@@ -214,7 +223,7 @@ namespace LiveCoreLibrary.Client
                     try
                     {
                         if (cts.IsCancellationRequested) return;
-                        if (!CheckConnected(client.Client))
+                        if (!client.Connected)
                         {
                             Close();
                         }
@@ -234,8 +243,11 @@ namespace LiveCoreLibrary.Client
         /// </summary>
         public void Close()
         {
-            Console.WriteLine("-----------------");
+            Console.WriteLine();
+            //とりあえずここに置いとく
+            OnDisconnected?.Invoke();
             ReceiveStop();
+            
             client?.Close();
             OnClose?.Invoke();
         }
