@@ -1,16 +1,18 @@
 ﻿using System;
 using System.Net;
-using System.Reflection.Emit;
 using System.Threading.Tasks;
-using System.Xml.Resolvers;
 using LiveCoreLibrary;
 using LiveCoreLibrary.Client;
 using LiveCoreLibrary.Commands;
 
-namespace PositionClient
+namespace LiveClient
 {
     public class LiveNetwork
     {
+        /// <summary>
+        /// そのうち書き直してね
+        /// </summary>
+        public bool IsConnected { get; private set; }
         private static LiveNetwork _instance;
         public static LiveNetwork Instance => _instance ??= new LiveNetwork();
 
@@ -158,6 +160,8 @@ namespace PositionClient
             //受信開始
             _tcp.ReceiveStart(100);
             OnConnected?.Invoke();
+
+            IsConnected = true;
         }
 
         private void OnDisconnected()
@@ -170,6 +174,8 @@ namespace PositionClient
                 Console.WriteLine("一応Close");
             } 
             Console.WriteLine($"[CLIENT]disconnect");
+
+            IsConnected = false;
         }
     }
 }
