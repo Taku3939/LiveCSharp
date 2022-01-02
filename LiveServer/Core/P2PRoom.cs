@@ -22,7 +22,6 @@ namespace LiveServer
 
         private async void Join(Guid userId)
         {
-           
             await TcpSend(new JoinResult(userId));
         }
         private async void Leave(Guid userId)

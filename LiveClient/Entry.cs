@@ -1,9 +1,8 @@
 ﻿using System;
-using System.Reflection.Emit;
 using System.Threading.Tasks;
 using LiveCoreLibrary.Commands;
 
-namespace PositionClient
+namespace LiveClient
 {
     class Entry
     {
