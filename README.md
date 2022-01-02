@@ -18,6 +18,11 @@ cd LiveServer
 dotnet run
 ```
 
+case of docker 
+```
+docker run -d -p 25565:25565 -p 25501:25501/udp live-server
+```
+
 # client run
 
 ```
