@@ -5,8 +5,8 @@ This is p2p Server using tcp and udp protocol.
  `./LiveServer`     : Server project for live <br>
  `./LiveClient`     : Client that can communicate with p2p<br>
  `./ChatClient`     : Client that chat with multiple people.(Use test)<br>
- `./AdminConsole`   : WebClient to set playing time of live <br>
- `./Test`           : Test to see if the server works properly <br>
+ <del>`./AdminConsole`   : WebClient to set playing time of live</del> <br>
+ <del>`./Test`           : Test to see if the server works properly</del> <br>
  `./LiveCoreLibrary`: Library for these project<br>
 
 ## How to use
@@ -19,6 +19,7 @@ dotnet run
 ```
 
 case of docker 
+
 ```
 docker run -d -p 25565:25565 -p 25501:25501/udp live-server
 ```

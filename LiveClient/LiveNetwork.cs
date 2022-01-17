@@ -19,13 +19,13 @@ namespace LiveClient
         private Tcp _tcp;
         private Udp _udp;
         private EndPointPacketHolder _p2PClients;
-        public event Action<ReceiveData> OnMessageReceivedTcp;
-        public event Action<IUdpCommand> OnMessageReceivedUdp;
-        public event Action OnConnected;
-        public event Action<Guid> OnJoin;
-        public event Action<Guid> OnLeave;
+        public event Action<ReceiveData> OnMessageReceivedTcpEvent;
+        public event Action<IUdpCommand> OnMessageReceivedUdpEvent;
+        public event Action OnConnectedEvent;
+        public event Action<Guid> OnJoinEvent;
+        public event Action<Guid> OnLeaveEvent;
 
-        public event Action OnClose;
+        public event Action OnCloseEvent;
         private Guid _userId;
 
         /// <summary>
@@ -90,7 +90,7 @@ namespace LiveClient
             _tcp.OnMessageReceived += OnMessageReceived;
             _tcp.OnConnected += OnConnect;
             _tcp.OnDisconnected += OnDisconnected;
-            _tcp.OnClose += OnClose;
+            _tcp.OnClose += OnCloseEvent;
             // 接続するまで待機
             while (!await _tcp.ConnectAsync(host, port)) Console.Write("...");
             Console.WriteLine(); //　改行
@@ -130,16 +130,16 @@ namespace LiveClient
             switch (receiveData.TcpCommand)
             {
                 case JoinResult x:
-                    OnJoin?.Invoke(x.UserId);
+                    OnJoinEvent?.Invoke(x.UserId);
                     break;
                 case LeaveResult x:
-                    OnLeave?.Invoke(x.UserId);
+                    OnLeaveEvent?.Invoke(x.UserId);
                     break;
                 case EndPointPacketHolder x:
                     _p2PClients = x;
                     break;
                 default:
-                    OnMessageReceivedTcp?.Invoke(receiveData);
+                    OnMessageReceivedTcpEvent?.Invoke(receiveData);
                     break;
             }
             
@@ -149,7 +149,7 @@ namespace LiveClient
 
         private void OnMessageReceivedOfUdp(IUdpCommand command)
         {
-            OnMessageReceivedUdp?.Invoke(command);
+            OnMessageReceivedUdpEvent?.Invoke(command);
         }
 
         private void OnConnect(IPEndPoint ipEndPoint)
@@ -159,7 +159,7 @@ namespace LiveClient
 
             //受信開始
             _tcp.ReceiveStart(100);
-            OnConnected?.Invoke();
+            OnConnectedEvent?.Invoke();
 
             IsConnected = true;
         }

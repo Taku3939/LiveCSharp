@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
+using LiveCoreLibrary;
 using LiveCoreLibrary.Commands;
 
 namespace LiveClient
@@ -16,32 +17,9 @@ namespace LiveClient
         public static async Task Main(string[] args)
         {
             userId = Guid.NewGuid();
-            LiveNetwork.Instance.OnMessageReceivedUdp += (command) =>
-            {
-                switch (command)
-                {
-                    case PositionPacket x:
-                        Console.WriteLine("Id : " + x.Id);
-                        break;
-                }
-            };
-
-            LiveNetwork.Instance.OnMessageReceivedTcp += (message) =>
-            {
-                var command = message.TcpCommand;
-                switch (command)
-                {
-                    case ChatPacket x:
-                        Console.WriteLine(x.Message);
-                        break;
-                }
-            };
-
-            LiveNetwork.Instance.OnJoin += async (id) =>
-            {
-                Console.WriteLine("join is " + id);
-                await LiveNetwork.Instance.HolePunching();
-            };
+            LiveNetwork.Instance.OnMessageReceivedUdpEvent += OnMessageReceivedUdpEvent;
+            LiveNetwork.Instance.OnMessageReceivedTcpEvent += OnMessageReceivedTcpEvent;
+            LiveNetwork.Instance.OnJoinEvent += OnJoinEvent;
             await LiveNetwork.Instance.ConnectTcp(tcpHost, tcpPort);
             LiveNetwork.Instance.Join(userId, roomName);
             LiveNetwork.Instance.ConnectUdp(udpHost, udpPort);
@@ -55,6 +33,31 @@ namespace LiveClient
             }
         }
 
+        public static void OnMessageReceivedUdpEvent(IUdpCommand command)
+        {
+            switch (command)
+            {
+                case PositionPacket x:
+                    Console.WriteLine("Id : " + x.Id);
+                    break;
+            }
+        }
+        public static async void OnJoinEvent(Guid id)
+        {
+            Console.WriteLine("join is " + id);
+            await LiveNetwork.Instance.HolePunching();
+        }
+
+        public static void OnMessageReceivedTcpEvent(ReceiveData message)
+        {
+            var command = message.TcpCommand;
+            switch (command)
+            {
+                case ChatPacket x:
+                    Console.WriteLine(x.Message);
+                    break;
+            }
+        }
         public async void ReConnect()
         {
             LiveNetwork.Instance.Close();
