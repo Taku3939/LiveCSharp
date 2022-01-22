@@ -2,8 +2,8 @@
 using System.Linq;
 using System.Net.Sockets;
 using System.Threading.Tasks;
-using LiveCoreLibrary;
 using LiveCoreLibrary.Commands;
+using LiveCoreLibrary.Messages;
 using MessagePack;
 
 namespace LiveServer

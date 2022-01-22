@@ -1,6 +1,7 @@
 ﻿using System;
 using LiveCoreLibrary;
 using LiveCoreLibrary.Commands;
+using LiveCoreLibrary.Messages;
 
 namespace LiveServer.Sample
 {

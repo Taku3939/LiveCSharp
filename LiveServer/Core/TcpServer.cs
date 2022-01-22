@@ -9,6 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using LiveCoreLibrary;
 using LiveCoreLibrary.Commands;
+using LiveCoreLibrary.Messages;
 using LiveCoreLibrary.Utility;
 
 namespace LiveServer
