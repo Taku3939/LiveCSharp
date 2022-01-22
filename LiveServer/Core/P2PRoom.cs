@@ -15,18 +15,19 @@ namespace LiveServer
         protected P2PRoom(string name, UdpServer udp) : base(name)
         {
             this._udp = udp;
-            OnJoin += Join;
-            OnLeave += Leave;
-            OnUpdate += HolePunching;
+            OnAddEvent += OnAdd;
+            OnRemoveEvent += OnRemove;
+            OnUpdateEvent += HolePunching;
         }
 
-        private async void Join(Guid userId)
+        private async void OnAdd(Guid userId)
         {
             await TcpSend(new JoinResult(userId));
         }
-        private async void Leave(Guid userId)
+        private async void OnRemove(Guid userId)
         {
             await TcpSend(new LeaveResult(userId));
+      
         }
 
         async void HolePunching()
@@ -118,7 +119,6 @@ namespace LiveServer
         /// <summary>
         /// Udp送信
         /// </summary>
-        /// <param name="udp"></param>
         /// <param name="udpCommand"></param>
         public async Task UdpSend(IUdpCommand udpCommand)
         {

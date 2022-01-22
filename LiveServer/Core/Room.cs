@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading.Tasks;
-using LiveCoreLibrary.Client;
 using LiveCoreLibrary.Commands;
 
 namespace LiveServer
@@ -18,9 +16,9 @@ namespace LiveServer
         protected SocketData[] Clients = null;
 
 
-        public event Action<Guid> OnJoin;
-        public event Action<Guid> OnLeave;
-        public event Action OnUpdate;
+        public event Action<Guid> OnAddEvent;
+        public event Action<Guid> OnRemoveEvent;
+        public event Action OnUpdateEvent;
         
         /// <summary>
         /// コンストラクタ
@@ -40,13 +38,13 @@ namespace LiveServer
         /// <param name="client"></param>
         public async void Add(Guid guid, TcpClient client)
         {
-            if (SocketHolder.TryAdd(guid, new SocketData(guid, client, new EndPointPacket(guid, "", -1))))
+            if(!SocketHolder.ContainsKey(guid) && SocketHolder.TryAdd(guid, new SocketData(guid, client, new EndPointPacket(guid, "", -1))))
             {
                 Console.WriteLine($"[SERVER]:id`{guid}` is join");
                 UpdateClient(); 
                 //wait 1s
                 await Task.Delay(1000);
-                OnJoin?.Invoke(guid);
+                OnAddEvent?.Invoke(guid);
             }
         }
 
@@ -57,17 +55,17 @@ namespace LiveServer
         /// <param name="guid"></param>
         public async void Remove(Guid guid)
         {
-            if (SocketHolder.TryRemove(guid, out var socketData))
+            if (SocketHolder.ContainsKey(guid) && SocketHolder.TryRemove(guid, out var socketData))
             {
                 var client = socketData.tcpClient;
                 if (client.Client.RemoteEndPoint is IPEndPoint remoteEndPoint)
                     Console.WriteLine(
-                        $"[SERVER]{IPAddress.Parse(remoteEndPoint.Address.ToString())}: {remoteEndPoint.Port.ToString()} id`{guid.ToString()}` leave RoomName`{this.Name}`");
+                        $"[SERVER] : {IPAddress.Parse(remoteEndPoint.Address.ToString())}: {remoteEndPoint.Port.ToString()} id`{guid.ToString()}` leave RoomName`{this.Name}`");
 
                 // リストの更新
                 UpdateClient();
                 await Task.Delay(1000);
-                OnLeave?.Invoke(guid);
+                OnRemoveEvent?.Invoke(guid);
             }
         }
 
@@ -85,10 +83,8 @@ namespace LiveServer
                     SocketHolder.TryRemove(guid, out var data);
                     // リストの更新
                     UpdateClient();
-
-
                     await Task.Delay(1000);
-                    OnLeave?.Invoke(guid);
+                    OnRemoveEvent?.Invoke(guid);
                     break;
                 }
             }
@@ -113,7 +109,7 @@ namespace LiveServer
                 this.Clients = copyData;
             }
             
-            OnUpdate?.Invoke();
+            OnUpdateEvent?.Invoke();
         }
     }
 }

@@ -60,9 +60,12 @@ namespace LiveServer
                         List<TcpClient> removeList = new List<TcpClient>();
 
                         // 削除用リストに追加
+
                         foreach (var client in clients)
-                            if (!client.Connected)
+                        {
+                            if (!client.Connected || !IsConnected(client.Client))
                                 removeList.Add(client);
+                        }
 
 
                         foreach (var client in removeList)
@@ -133,6 +136,7 @@ namespace LiveServer
             {
                 while (true)
                 {
+                    Console.WriteLine($"[SERVER] client count : {_holder.GetClients().Count.ToString()}");
                     try
                     {
                         if (source.IsCancellationRequested) return;
@@ -155,6 +159,14 @@ namespace LiveServer
                                 Console.WriteLine(
                                     $"[SERVER]{remoteEndPoint.Address}: {remoteEndPoint.Port.ToString()} CONNECT");
                             Console.WriteLine($"[SERVER] client count : {_holder.GetClients().Count.ToString()}");
+                            string str = "";
+                            foreach (var x in _holder.GetClients()
+                                         .Select(x => ((IPEndPoint)x.Client.RemoteEndPoint).Port.ToString() + ","))
+                            {
+                                str += x;
+                            }
+                            
+                            Console.WriteLine(str);
 #endif
                         }
 

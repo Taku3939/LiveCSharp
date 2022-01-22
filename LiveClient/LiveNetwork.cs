@@ -30,6 +30,7 @@ namespace LiveClient
 
         /// <summary>
         /// Udpホールパンチングにより、Portの開放を行う
+        /// Udp接続の開始時に使う必要がある
         /// </summary>
         public async Task HolePunching()
         {
@@ -74,6 +75,11 @@ namespace LiveClient
         {
             ITcpCommand leave = new Leave(_userId);
             _tcp.SendAsync(leave);
+            
+            // P2Pのリストを空に
+            _p2PClients = null;
+            _udp.Close();
+            _udp = null;
         }
 
         /// <summary>
@@ -108,7 +114,6 @@ namespace LiveClient
             _udp = new Udp(_userId, new IPEndPoint(IPAddress.Parse(host), port));
             _udp.ReceiveLoop(10);
             _udp.Process(10);
-
             _udp.OnMessageReceived += OnMessageReceivedOfUdp;
             await HolePunching();
         }

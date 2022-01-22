@@ -6,6 +6,7 @@ using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 using LiveCoreLibrary.Commands;
+using LiveCoreLibrary.Utility;
 using MessagePack;
 
 namespace LiveCoreLibrary.Client
@@ -14,12 +15,8 @@ namespace LiveCoreLibrary.Client
     {
         readonly UdpClient _udp;
         private readonly ConcurrentQueue<byte[]> _bufferPool;
-
         private CancellationTokenSource _cts;
-    
         private IPEndPoint _endPoint;
-
-
         public event Action<IUdpCommand> OnMessageReceived;
         private Guid UserId;
 
@@ -35,7 +32,7 @@ namespace LiveCoreLibrary.Client
             IUdpCommand ping = new HolePunchingPacket(userId);
             var pingBuf = MessagePackSerializer.Serialize(ping);
             _udp.Client.SendTo(pingBuf, endPoint);
-            
+
             _bufferPool = new ConcurrentQueue<byte[]>();
         }
 
@@ -54,6 +51,10 @@ namespace LiveCoreLibrary.Client
                             UdpReceiveResult res = await _udp.ReceiveAsync();
                             _bufferPool.Enqueue(res.Buffer);
                         }
+                    }
+                    catch (SocketException e)
+                    {
+                        Console.WriteLine(e.ToString());
                     }
                     catch (Exception e)
                     {
@@ -96,7 +97,7 @@ namespace LiveCoreLibrary.Client
         }
 
 
-        public async Task SendClients(IUdpCommand udpCommand, EndPointPacketHolder p2PClients)
+        public async Task SendClients(IUdpCommand udpCommand, EndPointPacketHolder p2PClients, bool isSelf = false)
         {
             try
             {
@@ -104,26 +105,49 @@ namespace LiveCoreLibrary.Client
                 var data = MessagePackSerializer.Serialize(udpCommand);
                 // 送信先が存在しない場合
                 if (p2PClients == null) return;
-                if (_udp.Client == null) return;
+                //if (_udp.Client == null) return;
+
+                // //自分のエンドポイントを取得
+                EndPointPacket selfPacket = new EndPointPacket(Guid.Empty, "", -1);
+
+                foreach (var x in p2PClients.EndPointPackets)
+                    if (x.Guid == this.UserId)
+                        selfPacket = x;
+                    
+                
+
+                //自分のエンドポイントがない場合
+                if (selfPacket.Port == -1) return;
+
+                // if(selfEndPointPacket == null) {return;}
                 // クライントごとに送信処理
+
+                string str = "";  
+                var array = p2PClients.EndPointPackets.Select(x => $"[{x.Address} : {x.Port} : {x.Guid}]");
+                foreach (var a in array)
+                {
+                    str += a;
+                }
+                
+                Console.WriteLine(str);
+
                 foreach (var udpEndPoint in p2PClients.EndPointPackets)
                 {
-                    // 自分のエンドポイントを取得
-                    // 自分以外に送信
+                    // あってるかは知らん
+                    if (!Utility.Util.IsConnected(_udp.Client))
+                        return;
 
-                
-                    if (_udp.Client.LocalEndPoint is IPEndPoint endPoint && udpEndPoint.Port != endPoint.Port)
-                    {
-                        // あってるかは知らん
-                        if (!Utility.Util.IsConnected(_udp.Client))
-                        {
-                            return;
-                        }
+                    string address = udpEndPoint.Address;
+                    int port = udpEndPoint.Port;
+                    // アドレスが自分のグローバルIPだった場合ローカルホストにする
+                    if (selfPacket.Address == address) address = "127.0.0.1";
 
-                        string address = udpEndPoint.Address;
-                        // if (udpEndPoint.Address == "192.168.11.1") uo = "126.74.187.200";
-                        await _udp.SendAsync(data, data.Length, address, udpEndPoint.Port);
-                    }
+                    //自分に送信しない場合
+                    if (!isSelf && port == selfPacket.Port) continue;
+
+                    //送信
+                    Console.WriteLine($"Send to [{address} : {port}]");
+                    await _udp.SendAsync(data, data.Length, address, udpEndPoint.Port);
                 }
             }
             catch (Exception e)

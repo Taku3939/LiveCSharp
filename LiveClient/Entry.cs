@@ -16,22 +16,37 @@ namespace LiveClient
 
         public static async Task Main(string[] args)
         {
+            // IDの生成
             userId = Guid.NewGuid();
+            
+            // イベントの追加
             LiveNetwork.Instance.OnMessageReceivedUdpEvent += OnMessageReceivedUdpEvent;
             LiveNetwork.Instance.OnMessageReceivedTcpEvent += OnMessageReceivedTcpEvent;
-            LiveNetwork.Instance.OnJoinEvent += OnJoinEvent;
+            LiveNetwork.Instance.OnJoinEvent += OnJoin;
+            LiveNetwork.Instance.OnLeaveEvent += OnLeave;
+
+            // TCPサーバーに接続
             await LiveNetwork.Instance.ConnectTcp(tcpHost, tcpPort);
             LiveNetwork.Instance.Join(userId, roomName);
-            LiveNetwork.Instance.ConnectUdp(udpHost, udpPort);
-            
+     
+
             while (true)
             {
-                await Position();
-                Chat("uouo");
-          
+                var r = Console.ReadLine();
+                if (r == "c") Chat("uouo");
+                else if (r == "p") await Position();
+                else if (r == "h") await LiveNetwork.Instance.HolePunching();
+                else if (r == "l") LiveNetwork.Instance.Leave();
+                else if (r == "j") LiveNetwork.Instance.Join(userId, roomName);
+                
+
                 await Task.Delay(2000);
             }
         }
+
+    
+
+        private static int i = 0;
 
         public static void OnMessageReceivedUdpEvent(IUdpCommand command)
         {
@@ -42,12 +57,18 @@ namespace LiveClient
                     break;
             }
         }
-        public static async void OnJoinEvent(Guid id)
+
+        public static async void OnJoin(Guid id)
         {
             Console.WriteLine("join is " + id);
+            
+            LiveNetwork.Instance.ConnectUdp(udpHost, udpPort);
             await LiveNetwork.Instance.HolePunching();
         }
-
+        public static void OnLeave(Guid id)
+        {
+            Console.WriteLine("leave is " + id);
+        }
         public static void OnMessageReceivedTcpEvent(ReceiveData message)
         {
             var command = message.TcpCommand;
@@ -58,9 +79,13 @@ namespace LiveClient
                     break;
             }
         }
-        public async void ReConnect()
+
+        public static async void ReConnect()
         {
+            LiveNetwork.Instance.Leave();
+            await Task.Delay(2000);
             LiveNetwork.Instance.Close();
+            await Task.Delay(2000);
             await LiveNetwork.Instance.ConnectTcp(tcpHost, tcpPort);
             LiveNetwork.Instance.Join(userId, roomName);
             LiveNetwork.Instance.ConnectUdp(udpHost, udpPort);

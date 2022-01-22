@@ -243,7 +243,6 @@ namespace LiveCoreLibrary.Client
         /// </summary>
         public void Close()
         {
-            Console.WriteLine();
             //とりあえずここに置いとく
             OnDisconnected?.Invoke();
             ReceiveStop();
