@@ -9,8 +9,8 @@ namespace ChatClient
 {
     static class Entry
     {
-        private static string host = "localhost";
-        private static int port = 30000;
+        private static string host = "127.0.0.1";
+        private static int port = 25565;
 
         private static string roomName = "Test";
         private static async Task Main(string[] args)

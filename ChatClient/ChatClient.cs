@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Threading.Tasks;
-using LiveCoreLibrary;
 using LiveCoreLibrary.Client;
 using LiveCoreLibrary.Commands;
+using LiveCoreLibrary.Messages;
 
 namespace ChatClient
 {

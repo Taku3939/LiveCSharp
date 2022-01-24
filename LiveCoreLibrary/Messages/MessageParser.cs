@@ -1,7 +1,7 @@
 ﻿using System.IO;
 using LiveCoreLibrary.Commands;
 
-namespace LiveCoreLibrary
+namespace LiveCoreLibrary.Messages
 {
     public static class MessageParser
     {

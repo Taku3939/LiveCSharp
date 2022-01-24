@@ -1,11 +1,11 @@
 using System;
 using System.IO;
-using System.IO.Pipes;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 using LiveCoreLibrary.Commands;
+using LiveCoreLibrary.Messages;
 
 namespace LiveCoreLibrary.Client
 {
@@ -243,7 +243,6 @@ namespace LiveCoreLibrary.Client
         /// </summary>
         public void Close()
         {
-            Console.WriteLine();
             //とりあえずここに置いとく
             OnDisconnected?.Invoke();
             ReceiveStop();
