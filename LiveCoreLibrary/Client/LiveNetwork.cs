@@ -1,11 +1,10 @@
 ﻿using System;
 using System.Net;
 using System.Threading.Tasks;
-using LiveCoreLibrary;
-using LiveCoreLibrary.Client;
 using LiveCoreLibrary.Commands;
+using LiveCoreLibrary.Messages;
 
-namespace LiveClient
+namespace LiveCoreLibrary.Client
 {
     public class LiveNetwork
     {
@@ -35,7 +34,7 @@ namespace LiveClient
         public async Task HolePunching()
         {
             IUdpCommand endPointPacket = new HolePunchingPacket(this._userId);
-            await _udp.SendServer(endPointPacket);
+            if(_udp != null) await _udp.SendServer(endPointPacket);
         }
 
         /// <summary>

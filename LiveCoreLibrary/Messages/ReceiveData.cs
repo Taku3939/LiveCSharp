@@ -1,7 +1,7 @@
 ﻿using System.Net.Sockets;
 using LiveCoreLibrary.Commands;
 
-namespace LiveCoreLibrary
+namespace LiveCoreLibrary.Messages
 {
     public class ReceiveData
     {

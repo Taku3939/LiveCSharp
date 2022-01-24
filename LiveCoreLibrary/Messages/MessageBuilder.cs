@@ -3,7 +3,7 @@ using System.Text;
 using LiveCoreLibrary.Commands;
 using MessagePack;
 
-namespace LiveCoreLibrary
+namespace LiveCoreLibrary.Messages
 {
     public class MessageBuilder
     {

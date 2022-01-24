@@ -6,7 +6,6 @@ using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 using LiveCoreLibrary.Commands;
-using LiveCoreLibrary.Utility;
 using MessagePack;
 
 namespace LiveCoreLibrary.Client

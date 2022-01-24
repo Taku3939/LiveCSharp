@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Threading.Tasks;
-using LiveCoreLibrary;
+using LiveCoreLibrary.Client;
 using LiveCoreLibrary.Commands;
+using LiveCoreLibrary.Messages;
 
 namespace LiveClient
 {
@@ -43,11 +44,7 @@ namespace LiveClient
                 await Task.Delay(2000);
             }
         }
-
-    
-
-        private static int i = 0;
-
+        
         public static void OnMessageReceivedUdpEvent(IUdpCommand command)
         {
             switch (command)
