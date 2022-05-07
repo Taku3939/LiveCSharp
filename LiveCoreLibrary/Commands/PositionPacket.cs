@@ -6,7 +6,7 @@ namespace LiveCoreLibrary.Commands
     [MessagePackObject]
     public class PositionPacket : IUdpCommand
     {
-        [Key(0)] public readonly Guid Id;
+        [Key(0)] public readonly ulong Id;
         [Key(1)] public readonly float X;
         [Key(2)] public readonly float Y;
         [Key(3)] public readonly float Z;
@@ -15,7 +15,7 @@ namespace LiveCoreLibrary.Commands
         [Key(6)] public readonly float Qz;
         [Key(7)] public readonly float Qw;
 
-        public PositionPacket(Guid id, float x, float y, float z, float qx, float qy, float qz, float qw)
+        public PositionPacket(ulong id, float x, float y, float z, float qx, float qy, float qz, float qw)
         {
             Id = id;
             X = x;

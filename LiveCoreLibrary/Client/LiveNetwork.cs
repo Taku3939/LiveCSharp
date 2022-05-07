@@ -21,11 +21,11 @@ namespace LiveCoreLibrary.Client
         public event Action<ReceiveData> OnMessageReceivedTcpEvent;
         public event Action<IUdpCommand> OnMessageReceivedUdpEvent;
         public event Action OnConnectedEvent;
-        public event Action<Guid> OnJoinEvent;
-        public event Action<Guid> OnLeaveEvent;
+        public event Action<ulong> OnJoinEvent;
+        public event Action<ulong> OnLeaveEvent;
 
         public event Action OnCloseEvent;
-        private Guid _userId;
+        private ulong _userId;
 
         /// <summary>
         /// Udpホールパンチングにより、Portの開放を行う
@@ -60,10 +60,10 @@ namespace LiveCoreLibrary.Client
         /// </summary>
         /// <param name="userId"></param>
         /// <param name="roomName"></param>
-        public void Join(Guid userId, string roomName)
+        public void Join(ulong userId, string roomName, string prefix)
         {
             this._userId = userId;
-            ITcpCommand join = new Join(userId, roomName);
+            ITcpCommand join = new Join(userId, roomName, prefix);
             _tcp.SendAsync(join);
         }
 

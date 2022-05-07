@@ -6,22 +6,25 @@ namespace LiveCoreLibrary.Commands
     [MessagePackObject]
     public class Join : ITcpCommand
     {
-        [Key(0)] public Guid UserId { get; }
+        [Key(0)] public ulong UserId { get; }
 
         [Key(1)] public string RoomName { get; }
-        public Join(Guid userId, string roomName)
+        [Key(2)] public string Prefix { get; }
+
+        public Join(ulong userId, string roomName, string prefix)
         {
             this.UserId = userId;
             this.RoomName = roomName;
+            this.Prefix = prefix;
         }
     }
 
     [MessagePackObject]
     public class Leave : ITcpCommand
     {
-        [Key(0)] public Guid UserId { get; }
+        [Key(0)] public ulong UserId { get; }
 
-        public Leave(Guid userId)
+        public Leave(ulong userId)
         {
             this.UserId = userId;
         }
@@ -30,8 +33,8 @@ namespace LiveCoreLibrary.Commands
     [MessagePackObject]
     public class JoinResult : ITcpCommand
     {
-        [Key(0)] public Guid UserId;
-        public JoinResult(Guid userId)
+        [Key(0)] public ulong UserId;
+        public JoinResult(ulong userId)
         {
             this.UserId = userId;
         }
@@ -40,9 +43,9 @@ namespace LiveCoreLibrary.Commands
     [MessagePackObject]
     public class LeaveResult : ITcpCommand
     {
-        [Key(0)] public Guid UserId;
+        [Key(0)] public ulong UserId;
         
-        public LeaveResult(Guid userId)
+        public LeaveResult(ulong userId)
         {
             this.UserId = userId;
         }
@@ -52,4 +55,13 @@ namespace LiveCoreLibrary.Commands
     /// 送信できない
     /// </summary>
     public class Disconnect : ITcpCommand { }
+    
+    [MessagePackObject]
+    public class Fault : ITcpCommand
+    {
+        
+        public Fault()
+        {
+        }
+    }
 }

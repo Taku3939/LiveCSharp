@@ -1,13 +1,13 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
-using LiveCoreLibrary;
 using LiveCoreLibrary.Commands;
 using LiveCoreLibrary.Messages;
 using LiveCoreLibrary.Utility;
@@ -52,14 +52,15 @@ namespace LiveServer
             _sources.Add(source);
             Task.Run(async () =>
             {
+                List<TcpClient> removeList = new List<TcpClient>();
+
                 while (true)
                 {
                     try
                     {
                         if (source.IsCancellationRequested) return;
                         var clients = _holder.GetClients();
-                        List<TcpClient> removeList = new List<TcpClient>();
-
+      
                         // 削除用リストに追加
 
                         foreach (var client in clients)
@@ -86,9 +87,11 @@ namespace LiveServer
                             // Close and Remove
                             _holder.Remove(client);
                         }
-
+                        
+                       
                         await Task.Delay(interval, source.Token);
                         source.Token.ThrowIfCancellationRequested();
+                        removeList.Clear();
                     }
                     catch (OperationCanceledException)
                     {
@@ -135,13 +138,14 @@ namespace LiveServer
             _sources.Add(source);
             Task.Run(async () =>
             {
+                List<Task<TcpClient>> tasks = new List<Task<TcpClient>>();
                 while (true)
                 {
-                    Console.WriteLine($"[SERVER] client count : {_holder.GetClients().Count.ToString()}");
+                    //Console.WriteLine($"[SERVER] client count : {_holder.GetClients().Count.ToString()}");
                     try
                     {
                         if (source.IsCancellationRequested) return;
-                        List<Task<TcpClient>> tasks = new List<Task<TcpClient>>();
+                     
                         while (_listener.Pending())
                         {
                             var task = _listener.AcceptTcpClientAsync();
@@ -159,10 +163,10 @@ namespace LiveServer
                             if (remoteEndPoint != null)
                                 Console.WriteLine(
                                     $"[SERVER]{remoteEndPoint.Address}: {remoteEndPoint.Port.ToString()} CONNECT");
-                            Console.WriteLine($"[SERVER] client count : {_holder.GetClients().Count.ToString()}");
+                            // Console.WriteLine($"[SERVER] client count : {_holder.GetClients().Count.ToString()}");
                             string str = "";
                             foreach (var x in _holder.GetClients()
-                                         .Select(x => ((IPEndPoint)x.Client.RemoteEndPoint).Port.ToString() + ","))
+                                         .Select(x => ((IPEndPoint)x.Client.RemoteEndPoint)?.Port.ToString() + ","))
                             {
                                 str += x;
                             }
@@ -182,6 +186,8 @@ namespace LiveServer
                     {
                         Console.WriteLine(e.ToString());
                     }
+                    
+                    tasks.Clear();
                 }
             }, source.Token);
         }
@@ -198,6 +204,10 @@ namespace LiveServer
             _sources.Add(source);
             Task.Run(async () =>
             {
+                // エラー時のクライアント削除用リスト
+                Queue<TcpClient> rmCl = new Queue<TcpClient>();
+
+                List<Task> receiveEvents = new List<Task>();
                 while (true)
                 {
                     try
@@ -208,10 +218,7 @@ namespace LiveServer
                         //　クライアントの取得
                         var clients = _holder.GetClients();
 
-                        // エラー時のクライアント削除用リスト
-                        Queue<TcpClient> rmCl = new Queue<TcpClient>();
-
-                        List<Task> receiveEvents = new List<Task>();
+                
                         //　クライアントごとに処理を行う
                         foreach (var client in clients)
                         {
@@ -285,6 +292,9 @@ namespace LiveServer
                                 Console.WriteLine(e.ToString());
                             }
                         }
+                        
+                        rmCl.Clear();
+                        receiveEvents.Clear();
                     }
                     catch (IOException e)
                     {
@@ -338,7 +348,6 @@ namespace LiveServer
         /// </summary>
         public void Close()
         {
-            Console.WriteLine("hogehgeohgoehgoehg");
             //全てのループの終了
             foreach (var cancellationTokenSource in _sources)
                 cancellationTokenSource.Cancel();

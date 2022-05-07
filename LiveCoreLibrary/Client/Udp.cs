@@ -17,9 +17,9 @@ namespace LiveCoreLibrary.Client
         private CancellationTokenSource _cts;
         private IPEndPoint _endPoint;
         public event Action<IUdpCommand> OnMessageReceived;
-        private Guid UserId;
+        private ulong UserId;
 
-        public Udp(Guid userId, IPEndPoint endPoint)
+        public Udp(ulong userId, IPEndPoint endPoint)
         {
             UserId = userId;
             _cts = new CancellationTokenSource();
@@ -107,10 +107,10 @@ namespace LiveCoreLibrary.Client
                 //if (_udp.Client == null) return;
 
                 // //自分のエンドポイントを取得
-                EndPointPacket selfPacket = new EndPointPacket(Guid.Empty, "", -1);
+                EndPointPacket selfPacket = new EndPointPacket(0, "", -1);
 
                 foreach (var x in p2PClients.EndPointPackets)
-                    if (x.Guid == this.UserId)
+                    if (x.Id == this.UserId)
                         selfPacket = x;
                     
                 
@@ -122,7 +122,7 @@ namespace LiveCoreLibrary.Client
                 // クライントごとに送信処理
 
                 string str = "";  
-                var array = p2PClients.EndPointPackets.Select(x => $"[{x.Address} : {x.Port} : {x.Guid}]");
+                var array = p2PClients.EndPointPackets.Select(x => $"[{x.Address} : {x.Port} : {x.Id}]");
                 foreach (var a in array)
                 {
                     str += a;

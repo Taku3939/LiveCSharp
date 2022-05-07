@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using LiveCoreLibrary;
 using LiveCoreLibrary.Commands;
+using LiveCoreLibrary.Messages;
 using Xunit;
 using MessagePack;
 using Xunit.Abstractions;
