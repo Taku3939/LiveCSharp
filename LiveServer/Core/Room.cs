@@ -12,12 +12,12 @@ namespace LiveServer
         protected readonly object _lockObject = new();
 
         public readonly string Name;
-        public readonly ConcurrentDictionary<Guid, SocketData> SocketHolder;
+        public readonly ConcurrentDictionary<ulong, SocketData> SocketHolder;
         protected SocketData[] Clients = null;
 
 
-        public event Action<Guid> OnAddEvent;
-        public event Action<Guid> OnRemoveEvent;
+        public event Action<ulong> OnAddEvent;
+        public event Action<ulong> OnRemoveEvent;
         public event Action OnUpdateEvent;
         
         /// <summary>
@@ -27,24 +27,24 @@ namespace LiveServer
         protected Room(string name)
         {
             this.Name = name;
-            SocketHolder = new ConcurrentDictionary<Guid, SocketData>();
+            SocketHolder = new ConcurrentDictionary<ulong, SocketData>();
         }
 
 
         /// <summary>
         /// ルーム内にユーザの追加
         /// </summary>
-        /// <param name="guid"></param>
+        /// <param name="id"></param>
         /// <param name="client"></param>
-        public async void Add(Guid guid, TcpClient client)
+        public async void Add(ulong id, TcpClient client)
         {
-            if(!SocketHolder.ContainsKey(guid) && SocketHolder.TryAdd(guid, new SocketData(guid, client, new EndPointPacket(guid, "", -1))))
+            if(!SocketHolder.ContainsKey(id) && SocketHolder.TryAdd(id, new SocketData(id, client, new EndPointPacket(id, "", -1))))
             {
-                Console.WriteLine($"[SERVER]:id`{guid}` is join");
+                Console.WriteLine($"[SERVER]:id`{id}` is join");
                 UpdateClient(); 
                 //wait 1s
                 await Task.Delay(1000);
-                OnAddEvent?.Invoke(guid);
+                OnAddEvent?.Invoke(id);
             }
         }
 
@@ -52,20 +52,20 @@ namespace LiveServer
         /// <summary>
         /// ルームからユーザの削除
         /// </summary>
-        /// <param name="guid"></param>
-        public async void Remove(Guid guid)
+        /// <param name="id"></param>
+        public async void Remove(ulong id)
         {
-            if (SocketHolder.ContainsKey(guid) && SocketHolder.TryRemove(guid, out var socketData))
+            if (SocketHolder.ContainsKey(id) && SocketHolder.TryRemove(id, out var socketData))
             {
                 var client = socketData.tcpClient;
                 if (client.Client.RemoteEndPoint is IPEndPoint remoteEndPoint)
                     Console.WriteLine(
-                        $"[SERVER] : {IPAddress.Parse(remoteEndPoint.Address.ToString())}: {remoteEndPoint.Port.ToString()} id`{guid.ToString()}` leave RoomName`{this.Name}`");
+                        $"[SERVER] : {IPAddress.Parse(remoteEndPoint.Address.ToString())}: {remoteEndPoint.Port.ToString()} id`{id.ToString()}` leave RoomName`{this.Name}`");
 
                 // リストの更新
                 UpdateClient();
                 await Task.Delay(1000);
-                OnRemoveEvent?.Invoke(guid);
+                OnRemoveEvent?.Invoke(id);
             }
         }
 

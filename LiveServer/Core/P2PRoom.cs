@@ -20,11 +20,11 @@ namespace LiveServer
             OnUpdateEvent += HolePunching;
         }
 
-        private async void OnAdd(Guid userId)
+        private async void OnAdd(ulong userId)
         {
             await TcpSend(new JoinResult(userId));
         }
-        private async void OnRemove(Guid userId)
+        private async void OnRemove(ulong userId)
         {
             await TcpSend(new LeaveResult(userId));
       
@@ -48,30 +48,16 @@ namespace LiveServer
         {
         }
 
-        public void OnNext(ReceiveData value)
-        {
-            ITcpCommand tcpCommand = value.TcpCommand;
-            switch (tcpCommand)
-            {
-                case Join x:
-                    Add(x.UserId, value.Client);
-                    break;
-                case Leave x:
-                    Remove(x.UserId);
-                    break;
-            }
+        public abstract void OnNext(ReceiveData value);
 
-            OnReceivedTcp(value);
-        }
-
-        public abstract void OnReceivedTcp(ReceiveData value);
+  
 
         public void OnNext(EndPointPacket value)
         {
-            if (!SocketHolder.TryGetValue(value.Guid, out var oldData)) return;
+            if (!SocketHolder.TryGetValue(value.Id, out var oldData)) return;
 
-            SocketData newData = new SocketData(value.Guid, oldData.tcpClient, value);
-            if (!SocketHolder.TryUpdate(value.Guid, newData, oldData))
+            SocketData newData = new SocketData(value.Id, oldData.tcpClient, value);
+            if (!SocketHolder.TryUpdate(value.Id, newData, oldData))
             {
                 Console.WriteLine("失敗");
             }

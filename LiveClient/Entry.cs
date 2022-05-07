@@ -13,12 +13,13 @@ namespace LiveClient
         static int tcpPort = 25565;
         static int udpPort = 25501;
         static string roomName = "Test";
-        static Guid userId;
+        static ulong userId;
 
         public static async Task Main(string[] args)
         {
             // IDの生成
-            userId = Guid.NewGuid();
+            Random random = new Random();
+            userId = (ulong)random.Next(int.MinValue, int.MaxValue);
             
             // イベントの追加
             LiveNetwork.Instance.OnMessageReceivedUdpEvent += OnMessageReceivedUdpEvent;
@@ -28,8 +29,8 @@ namespace LiveClient
 
             // TCPサーバーに接続
             await LiveNetwork.Instance.ConnectTcp(tcpHost, tcpPort);
-            LiveNetwork.Instance.Join(userId, roomName);
-     
+            LiveNetwork.Instance.Join(userId, roomName, prefix: "");
+
 
             while (true)
             {
@@ -38,13 +39,13 @@ namespace LiveClient
                 else if (r == "p") await Position();
                 else if (r == "h") await LiveNetwork.Instance.HolePunching();
                 else if (r == "l") LiveNetwork.Instance.Leave();
-                else if (r == "j") LiveNetwork.Instance.Join(userId, roomName);
-                
+                else if (r == "j") LiveNetwork.Instance.Join(userId, roomName, prefix: "");
+
 
                 await Task.Delay(2000);
             }
         }
-        
+
         public static void OnMessageReceivedUdpEvent(IUdpCommand command)
         {
             switch (command)
@@ -55,17 +56,19 @@ namespace LiveClient
             }
         }
 
-        public static async void OnJoin(Guid id)
+        public static async void OnJoin(ulong id)
         {
             Console.WriteLine("join is " + id);
-            
+
             LiveNetwork.Instance.ConnectUdp(udpHost, udpPort);
             await LiveNetwork.Instance.HolePunching();
         }
-        public static void OnLeave(Guid id)
+
+        public static void OnLeave(ulong id)
         {
             Console.WriteLine("leave is " + id);
         }
+
         public static void OnMessageReceivedTcpEvent(ReceiveData message)
         {
             var command = message.TcpCommand;
@@ -73,6 +76,10 @@ namespace LiveClient
             {
                 case ChatPacket x:
                     Console.WriteLine(x.Message);
+                    
+                    break;
+                case EmotePacket x:
+                    Console.WriteLine(x.Key);
                     break;
             }
         }
@@ -84,7 +91,7 @@ namespace LiveClient
             LiveNetwork.Instance.Close();
             await Task.Delay(2000);
             await LiveNetwork.Instance.ConnectTcp(tcpHost, tcpPort);
-            LiveNetwork.Instance.Join(userId, roomName);
+            LiveNetwork.Instance.Join(userId, roomName, prefix: "");
             LiveNetwork.Instance.ConnectUdp(udpHost, udpPort);
         }
 

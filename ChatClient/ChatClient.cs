@@ -9,7 +9,7 @@ namespace ChatClient
     public class ChatClient
     {
         private readonly Tcp _tcp;
-        private readonly Guid _userId;
+        private readonly ulong _userId;
 
         private string host;
         private int port;
@@ -22,7 +22,10 @@ namespace ChatClient
             _tcp.OnMessageReceived += OnMessageReceived;
             _tcp.OnConnected += (r) => OnConnected();
             _tcp.OnDisconnected += OnDisconnected;
-            _userId = Guid.NewGuid();
+            
+            Random random = new Random();
+            _userId = (ulong) random.Next(int.MinValue, int.MaxValue);
+
         }
 
         public async Task Connect(string host, int port)
@@ -35,8 +38,7 @@ namespace ChatClient
 
         public void Join(string roomName)
         {
-            //
-            Join join = new Join(_userId, roomName);
+            Join join = new Join(_userId, roomName, prefix:"");
             _tcp.SendAsync(join);
         }
         public void Send(string message)
