@@ -50,6 +50,9 @@ namespace LiveServer.Sample
                     // Tcpで送信
                     //await TcpSend(tcpCommand);
                     break;
+                case ColorPacket x:
+                    Console.WriteLine("受信");
+                    break;
             }
             await TcpSend(tcpCommand);
         }

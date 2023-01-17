@@ -90,14 +90,18 @@ namespace LiveCoreLibrary.Client
         {
             // Tcp
             _tcp = new Tcp();
-
+            
             //イベント登録
             _tcp.OnMessageReceived += OnMessageReceived;
             _tcp.OnConnected += OnConnect;
             _tcp.OnDisconnected += OnDisconnected;
             _tcp.OnClose += OnCloseEvent;
+            
+            var addresses = await Dns.GetHostAddressesAsync(host);
+            var address = addresses[0];
+            
             // 接続するまで待機
-            while (!await _tcp.ConnectAsync(host, port)) Console.Write("...");
+            while (!await _tcp.ConnectAsync(address, port)) Console.Write("...");
             Console.WriteLine(); //　改行
         }
 
@@ -110,9 +114,12 @@ namespace LiveCoreLibrary.Client
         public async void ConnectUdp(string host, int port)
         {
             // Udp
-            _udp = new Udp(_userId, new IPEndPoint(IPAddress.Parse(host), port));
+            var addresses = await Dns.GetHostAddressesAsync(host);
+            var address = addresses[0];
+            _udp = new Udp(_userId, new IPEndPoint(address, port));
             _udp.ReceiveLoop(10);
             _udp.Process(10);
+
             _udp.OnMessageReceived += OnMessageReceivedOfUdp;
             await HolePunching();
         }

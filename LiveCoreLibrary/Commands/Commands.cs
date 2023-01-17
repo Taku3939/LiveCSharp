@@ -11,6 +11,7 @@ namespace LiveCoreLibrary.Commands
     [Union(4, typeof(LeaveResult))]
     [Union(5, typeof(EndPointPacketHolder))]
     [Union(6, typeof(EmotePacket))]
+    [Union(7, typeof(ColorPacket))]
     public interface ITcpCommand { }
 
     [Union(0, typeof(PositionPacket))]
